@@ -30,14 +30,15 @@ def spectrograms_for_genre(genre_name):
         audio_time_series, sampling_rate = librosa.load(
             os.path.abspath(os.path.join(os.getcwd(), '../../genres/', filepath)))
 
-        # Produce the spectrogram with 128 frequency bins, FFT window of 2048 samples
+        # Produce the spectrogram with 128 frequency bins, FFT window of 1024 samples
         spectrogram = librosa.feature.melspectrogram(y=audio_time_series, sr=sampling_rate,
-                                                     n_mels=128, n_fft=2048, fmax=8000)
+                                                     n_mels=128, n_fft=1024, fmax=10000)
 
         # Save the spectrogram image
-        librosa.display.specshow(librosa.logamplitude(spectrogram, ref_power=numpy.max), fmax=8000)
+        librosa.display.specshow(librosa.logamplitude(spectrogram, ref_power=numpy.max), fmax=10000)
         pylab.savefig(os.path.abspath(os.path.join(os.getcwd(), '../../spectrograms/',
-                                                   filepath[:-3] + 'png')))
+                                                   filepath[:-3] + 'png')),
+                      bbox_inches='tight', pad_inches=0)
 
 
 if __name__ == '__main__':

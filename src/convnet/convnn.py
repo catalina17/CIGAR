@@ -25,7 +25,8 @@ class ConvNN(object):
 
         """
         # Initialise layers with corresponding input/output dimensions
-        self._setup_layers(self.data_provider.get_input_shape, self.data_provider.get_output_shape)
+        self._setup_layers(self.data_provider.get_input_shape(),
+                           self.data_provider.get_output_shape())
 
         for it in range(num_iters):
             print "ConvNN training: iteration #" + str(it)

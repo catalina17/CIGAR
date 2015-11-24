@@ -1,15 +1,15 @@
 from layer import Layer
 
 
-class GlobalPoolingLayer(Layer):
-
-    def __init__(self, filter_size, stride):
-        raise NotImplementedError()
+class SoftmaxLayer(Layer):
 
     def forward_prop(self, input):
         raise NotImplementedError()
 
     def back_prop(self, output_grad):
+        raise NotImplementedError("Output layer - does not perform backpropagation")
+
+    def get_gradient(self, predicted_output, example_output):
         raise NotImplementedError()
 
     def set_input_shape(self, shape):
@@ -19,4 +19,4 @@ class GlobalPoolingLayer(Layer):
         raise NotImplementedError()
 
     def update_parameters(self, learning_rate):
-        raise NotImplementedError()
+        raise NotImplementedError("Output layer - does not perform parameter update")

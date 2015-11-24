@@ -6,8 +6,11 @@ class Layer(object):
     def back_prop(self, output_grad):
         raise NotImplementedError()
 
-    def _input_size(self):
+    def set_input_shape(self, shape):
         raise NotImplementedError()
 
-    def _output_size(self):
+    def get_output_shape(self):
+        raise NotImplementedError()
+
+    def update_parameters(self, learning_rate):
         raise NotImplementedError()

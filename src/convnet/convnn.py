@@ -29,7 +29,7 @@ class ConvNN(object):
                            self.data_provider.get_output_shape())
 
         for it in range(num_iters):
-            print "ConvNN training: iteration #" + str(it)
+            print "ConvNN training: iteration #" + str(it + 1)
 
             self.data_provider.reset()
             batch = self.data_provider.get_next_batch()
@@ -60,8 +60,8 @@ class ConvNN(object):
 
         Parameters
         ----------
-        cnn_input_shape : numpy.ndarray.shape
-        cnn_output_shape : numpy.ndarray.shape
+        cnn_input_shape : tuple
+        cnn_output_shape : tuple
 
         """
         current_shape = cnn_input_shape
@@ -74,12 +74,23 @@ class ConvNN(object):
                                                   cnn_output_shape
 
     def predict(self, input):
+        """
+
+        Parameters
+        ----------
+        input : numpy.array
+
+        Returns
+        -------
+        int
+
+        """
         # Forward propagation
         current_input = input
         for layer in self.layers:
             current_input = layer.forward_prop(current_input)
 
-        # Compute predicted class
+        # Compute predicted output
         predicted_class = np.argmax(current_input)
         return predicted_class
 

@@ -3,8 +3,8 @@ from layer import Layer
 
 class GlobalPoolingLayer(Layer):
 
-    def __init__(self, filter_size, stride):
-        raise NotImplementedError()
+    def __init__(self):
+        self.input_shape = None
 
     def forward_prop(self, input):
         raise NotImplementedError()
@@ -13,10 +13,24 @@ class GlobalPoolingLayer(Layer):
         raise NotImplementedError()
 
     def set_input_shape(self, shape):
-        raise NotImplementedError()
+        """
+
+        Parameters
+        ----------
+        shape : tuple
+
+        """
+        self.input_shape = shape
 
     def get_output_shape(self):
-        raise NotImplementedError()
+        """
+
+        Returns
+        -------
+        tuple
+
+        """
+        return (3 * self.input_shape[0], )
 
     def update_parameters(self, learning_rate):
         raise NotImplementedError()

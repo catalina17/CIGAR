@@ -44,6 +44,7 @@ class ConvLayer(Layer):
 
         """
         self.input_shape = shape
+        print "ConvLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -53,8 +54,10 @@ class ConvLayer(Layer):
         tuple
 
         """
-        return (self.num_filters,
-                self.input_shape[1] + self.num_padding_zeros - self.filter_shape[1] + 1)
+        shape = (self.num_filters,
+                 self.input_shape[1] + self.num_padding_zeros - self.filter_shape[1] + 1)
+        print "ConvLayer with output shape " + str(shape)
+        return shape
 
     def update_parameters(self, learning_rate):
         raise NotImplementedError()

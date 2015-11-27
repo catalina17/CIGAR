@@ -25,6 +25,7 @@ class SoftmaxLayer(Layer):
         """
         assert len(shape) == 1, "Input shape not suitable for output (Softmax) layer"
         self.n_nodes = shape[0]
+        print "SoftmaxLayer with input shape " + shape
 
     def get_output_shape(self):
         """
@@ -34,7 +35,9 @@ class SoftmaxLayer(Layer):
         tuple
 
         """
-        return (self.n_nodes, )
+        shape = (self.n_nodes, )
+        print "SoftmaxLayer with output shape " + shape
+        return shape
 
     def update_parameters(self, learning_rate):
         raise NotImplementedError("Output layer - does not perform parameter update")

@@ -1,37 +1,15 @@
-from .convnn import (
-    ConvNN,
-)
-
-from .layer import (
-    Layer,
-)
-
-from .conv_layer import (
-    ConvLayer,
-)
-
-from .fullyconnected_layer import (
-    FullyConnectedLayer,
-)
-
-from .maxpooling_layer import (
-    MaxPoolingLayer,
-)
-
-from .globalpooling_layer import (
-    GlobalPoolingLayer,
-)
-
-from .softmax_layer import (
-    SoftmaxLayer,
-)
+import conv_layer
+import fullyconnected_layer
+import globalpooling_layer
+import layer
+import maxpooling_layer
+import softmax_layer
 
 __all__ = [
-    'ConvNN',
-    'Layer',
-    'ConvLayer',
-    'FullyConnectedLayer',
-    'MaxPoolingLayer',
-    'GlobalPoolingLayer',
-    'SoftmaxLayer',
+    'conv_layer',
+    'fullyconnected_layer',
+    'globalpooling_layer',
+    'layer',
+    'maxpooling_layer',
+    'softmax_layer',
 ]

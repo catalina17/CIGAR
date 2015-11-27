@@ -28,6 +28,7 @@ class MaxPoolingLayer(Layer):
 
         """
         self.input_shape = shape
+        print "MaxPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -41,11 +42,16 @@ class MaxPoolingLayer(Layer):
             self.input_shape[1] % self.filter_shape[1] == 0,\
             "Input shape is not a multiple of filter shape in MaxPoolingLayer"
 
+        shape = None
+
         if self.input_shape[0] / self.filter_shape[0] == 1:
-            return (self.input_shape[1] / self.filter_shape[1], )
+            shape = (self.input_shape[1] / self.filter_shape[1], )
         else:
-            return (self.input_shape[0] / self.filter_shape[0],
-                    self.input_shape[1] / self.filter_shape[1])
+            shape = (self.input_shape[0] / self.filter_shape[0],
+                     self.input_shape[1] / self.filter_shape[1])
+
+        print "MaxPoolingLayer with output shape " + str(shape)
+        return shape
 
     def update_parameters(self, learning_rate):
         """

@@ -1,18 +1,7 @@
-from .data_provider import (
-    DataProvider,
-)
-
-from .math import (
-    relu,
-    d_relu,
-    sigmoid,
-    d_sigmoid,
-)
+import data_provider
+import math
 
 __all__ = [
-    'DataProvider',
-    'relu',
-    'd_relu',
-    'sigmoid',
-    'd_sigmoid',
+    'data_provider',
+    'math',
 ]

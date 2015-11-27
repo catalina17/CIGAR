@@ -1,7 +1,7 @@
 class DataProvider(object):
 
     def __init__(self, batch_size):
-        raise NotImplementedError()
+        self.batch_size = batch_size
 
     def get_next_batch(self):
         raise NotImplementedError()

@@ -1,3 +1,9 @@
+from convnet.conv_layer import ConvLayer
+from convnet.globalpooling_layer import GlobalPoolingLayer
+from convnet.fullyconnected_layer import FullyConnectedLayer
+from convnet.maxpooling_layer import MaxPoolingLayer
+from util.data_provider import DataProvider
+
 import numpy as np
 
 
@@ -68,10 +74,13 @@ class ConvNN(object):
         for layer in self.layers:
             layer.set_input_shape(current_shape)
             current_shape = layer.get_output_shape()
+            print "DONE setting up " + str(type(layer)) + '\n'
 
-        assert current_shape == cnn_output_shape, "Computed output shape " + current_shape +\
+        assert current_shape == cnn_output_shape, "Computed output shape " + str(current_shape) +\
                                                   " does not match given output shape " +\
-                                                  cnn_output_shape
+                                                  str(cnn_output_shape)
+
+        print "ConvNN setup successful!"
 
     def predict(self, input):
         """
@@ -96,3 +105,20 @@ class ConvNN(object):
 
     def _gradient_check(self, input, output):
         raise NotImplementedError()
+
+
+if __name__ == '__main__':
+    neural_net = ConvNN([ConvLayer(256, (128, 4), 0.1, False),
+                         MaxPoolingLayer((1, 4)),
+                         ConvLayer(256, (256, 4), 0.1, False),
+                         MaxPoolingLayer((1, 2)),
+                         ConvLayer(512, (256, 4), 0.1, False),
+                         MaxPoolingLayer((1, 2)),
+                         ConvLayer(512, (512, 4), 0.1, False),
+                         GlobalPoolingLayer(),
+                         FullyConnectedLayer(2048),
+                         FullyConnectedLayer(2048),
+                         FullyConnectedLayer(40)],
+                        DataProvider(20))
+
+    neural_net._setup_layers((128, 599), (40, ))

@@ -21,6 +21,7 @@ class GlobalPoolingLayer(Layer):
 
         """
         self.input_shape = shape
+        print "GlobalPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -30,7 +31,9 @@ class GlobalPoolingLayer(Layer):
         tuple
 
         """
-        return (3 * self.input_shape[0], )
+        shape = (3 * self.input_shape[0], )
+        print "GlobalPoolingLayer with output shape " + str(shape)
+        return shape
 
     def update_parameters(self, learning_rate):
         raise NotImplementedError()

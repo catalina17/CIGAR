@@ -29,6 +29,7 @@ class FullyConnectedLayer(Layer):
 
         """
         self.input_shape = shape
+        print "FullyConnectedLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -38,7 +39,9 @@ class FullyConnectedLayer(Layer):
         tuple
 
         """
-        return (self.num_nodes, )
+        shape = (self.num_nodes, )
+        print "FullyConnectedLayer with output shape " + str(shape)
+        return shape
 
     def update_parameters(self, learning_rate):
         """

@@ -1,4 +1,5 @@
 from layer import Layer
+import numpy as np
 
 
 class FullyConnectedLayer(Layer):
@@ -11,11 +12,19 @@ class FullyConnectedLayer(Layer):
         num_nodes : int
 
         """
-        self.input_shape = None
         self.num_nodes = num_nodes
 
+        self.input_shape = None
+        self.weights = None
+
     def forward_prop(self, input):
-        raise NotImplementedError()
+        assert self.input_shape == input.shape, "Input does not have correct shape"
+
+        output = np.zeros(self.get_output_shape())
+        for i in range(self.num_nodes):
+            output[i] = np.inner(input, self.weights[i])
+
+        return output
 
     def back_prop(self, output_grad):
         raise NotImplementedError()
@@ -29,6 +38,7 @@ class FullyConnectedLayer(Layer):
 
         """
         self.input_shape = shape
+        self.weights = np.random.randn(self.num_nodes, shape[0])
         print "FullyConnectedLayer with input shape " + str(shape)
 
     def get_output_shape(self):
@@ -52,3 +62,13 @@ class FullyConnectedLayer(Layer):
 
         """
         raise NotImplementedError()
+
+if __name__ == "__main__":
+    dummy_input = np.random.randn(4)
+    print dummy_input
+
+    layer = FullyConnectedLayer(5)
+    layer.set_input_shape((4,))
+
+    res = layer.forward_prop(dummy_input)
+    print res

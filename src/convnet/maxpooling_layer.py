@@ -95,8 +95,8 @@ if __name__ == "__main__":
     dummy_input = np.random.randn(2, 4)
     print dummy_input
 
-    maxpool_layer = MaxPoolingLayer(filter_shape=(2,2))
-    maxpool_layer.set_input_shape(dummy_input.shape)
+    layer = MaxPoolingLayer(filter_shape=(2,2))
+    layer.set_input_shape(dummy_input.shape)
 
-    res = maxpool_layer.forward_prop(dummy_input)
+    res = layer.forward_prop(dummy_input)
     print res

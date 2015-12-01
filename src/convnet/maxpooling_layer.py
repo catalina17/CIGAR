@@ -12,6 +12,7 @@ class MaxPoolingLayer(Layer):
 
         """
         self.filter_shape = filter_shape
+        print "Filter shape: " + str(filter_shape)
         self.input_shape = None
 
     def forward_prop(self, input):
@@ -35,12 +36,8 @@ class MaxPoolingLayer(Layer):
                 current_h = i * filter_h
                 current_w = j * filter_w
 
-                max_val = -np.inf
-                for h in range(filter_h):
-                    for w in range(filter_w):
-                        max_val = max(max_val, input[current_h + h][current_w + w])
-
-                output[i, j] = max_val
+                output[i, j] = input[current_h:current_h + filter_h,
+                                     current_w:current_w + filter_w].max(axis=0).max(axis=0)
 
         if output.shape[0] == 1:
             return output[0]
@@ -95,13 +92,11 @@ class MaxPoolingLayer(Layer):
         raise NotImplementedError()
 
 if __name__ == "__main__":
-    dummy_input = np.array([[1.4326, 2.472634, -26.4376],
-                            [-5476.436, 49.0, 0.467235]])
+    dummy_input = np.random.randn(2, 4)
     print dummy_input
 
-    maxpool_layer = MaxPoolingLayer(filter_shape=(1,3))
+    maxpool_layer = MaxPoolingLayer(filter_shape=(2,2))
     maxpool_layer.set_input_shape(dummy_input.shape)
 
     res = maxpool_layer.forward_prop(dummy_input)
-    print "Output of MaxPool layer: " + str(res.shape)
     print res

@@ -19,9 +19,9 @@ class MaxPoolingLayer(Layer):
         assert self.input_shape == input.shape, "Input does not have correct shape"
 
         if (len(self.get_output_shape()) == 1):
-            output = np.zeros((1, self.get_output_shape()[0]))
+            output = np.empty((1, self.get_output_shape()[0]))
         else:
-            output = np.zeros(self.get_output_shape())
+            output = np.empty(self.get_output_shape())
 
         filter_h = self.filter_shape[0]
         filter_w = self.filter_shape[1]

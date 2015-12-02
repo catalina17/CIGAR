@@ -13,18 +13,13 @@ class FullyConnectedLayer(Layer):
 
         """
         self.num_nodes = num_nodes
-
+        self.bias_weights = np.zeros(num_nodes)
         self.input_shape = None
         self.weights = None
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
-
-        output = np.zeros(self.get_output_shape())
-        for i in range(self.num_nodes):
-            output[i] = np.inner(input, self.weights[i])
-
-        return output
+        return np.dot(input, self.weights) + self.bias_weights
 
     def back_prop(self, output_grad):
         raise NotImplementedError()
@@ -38,7 +33,7 @@ class FullyConnectedLayer(Layer):
 
         """
         self.input_shape = shape
-        self.weights = np.random.randn(self.num_nodes, shape[0])
+        self.weights = np.random.randn(shape[0], self.num_nodes)
         print "FullyConnectedLayer with input shape " + str(shape)
 
     def get_output_shape(self):

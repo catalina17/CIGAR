@@ -19,11 +19,10 @@ class ConvLayer(Layer):
         self.filter_shape = filter_shape
         print "Filter shape: " + str(filter_shape)
 
-        self.filter_weights = np.ndarray(num_filters, dtype=np.ndarray)
+        self.filter_weights = np.empty(num_filters, dtype=np.ndarray)
         for i in range(num_filters):
             self.filter_weights[i] = np.random.rand(filter_shape[0], filter_shape[1])
 
-        self.d_weights = [np.zeros(filter_shape)]
         self.weight_decay = weight_decay
 
         if padding_mode:
@@ -42,7 +41,7 @@ class ConvLayer(Layer):
                      self.num_padding_zeros / 2:
                      self.num_padding_zeros / 2 + self.input_shape[1]] = input
 
-        output = np.zeros(self.get_output_shape())
+        output = np.empty(self.get_output_shape())
 
         filter_h = self.filter_shape[0]
         filter_w = self.filter_shape[1]

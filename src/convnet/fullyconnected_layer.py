@@ -13,13 +13,13 @@ class FullyConnectedLayer(Layer):
 
         """
         self.num_nodes = num_nodes
-        self.bias_weights = np.zeros(num_nodes)
+        self.biases = np.zeros(num_nodes)
         self.input_shape = None
         self.weights = None
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
-        return np.dot(input, self.weights) + self.bias_weights
+        return np.dot(input, self.weights) + self.biases
 
     def back_prop(self, output_grad):
         raise NotImplementedError()

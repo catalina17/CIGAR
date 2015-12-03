@@ -22,6 +22,7 @@ class ConvLayer(Layer):
         self.filter_weights = np.empty(num_filters, dtype=np.ndarray)
         for i in range(num_filters):
             self.filter_weights[i] = np.random.rand(filter_shape[0], filter_shape[1])
+        self.biases = np.zeros(num_filters)
 
         self.weight_decay = weight_decay
 
@@ -50,7 +51,8 @@ class ConvLayer(Layer):
         for f in range(self.num_filters):
             for i in range(range_i):
                 output[f][i] = sum(sum(np.multiply(self.filter_weights[f],
-                                                   padded_input[0:filter_h, i:i+filter_w])))
+                                                   padded_input[0:filter_h, i:i+filter_w]))) +\
+                               self.biases[f]
 
         return output
 

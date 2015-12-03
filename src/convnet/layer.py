@@ -11,6 +11,3 @@ class Layer(object):
 
     def get_output_shape(self):
         raise NotImplementedError()
-
-    def update_parameters(self, learning_rate):
-        raise NotImplementedError()

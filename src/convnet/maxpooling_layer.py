@@ -81,16 +81,6 @@ class MaxPoolingLayer(Layer):
         print "MaxPoolingLayer with output shape " + str(shape)
         return shape
 
-    def update_parameters(self, learning_rate):
-        """
-
-        Parameters
-        ----------
-        learning_rate : float
-
-        """
-        raise NotImplementedError()
-
 if __name__ == "__main__":
     dummy_input = np.random.randn(2, 4)
     print dummy_input

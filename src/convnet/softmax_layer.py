@@ -43,9 +43,6 @@ class SoftmaxLayer(Layer):
         print "SoftmaxLayer with output shape " + str(shape)
         return shape
 
-    def update_parameters(self, learning_rate):
-        raise NotImplementedError("Output layer - does not perform parameter update")
-
 if __name__ == "__main__":
     dummy_input = np.zeros(3)
     dummy_input[0] = 0

@@ -1,5 +1,6 @@
 from layer import Layer
 from util import math
+import numpy as np
 
 
 class ActivationLayer(Layer):
@@ -8,6 +9,9 @@ class ActivationLayer(Layer):
         if activation_fn == 'ReLU':
             self.activation_fn = math.relu
             self.d_activation_fn = math.d_relu
+        elif activation_fn == 'sigmoid':
+            self.activation_fn = math.sigmoid
+            self.d_activation_fn = math.d_sigmoid
 
         self.input_shape = None
         self.current_input = None
@@ -27,5 +31,12 @@ class ActivationLayer(Layer):
         print "ActivationLayer with output shape " + str(self.input_shape)
         return self.input_shape
 
-    def update_parameters(self, learning_rate):
-        raise NotImplementedError()
+if __name__ == '__main__':
+    dummy_input = np.zeros((4, 4))
+    print dummy_input
+
+    layer = ActivationLayer('ReLU')
+    layer.set_input_shape((4, 4))
+
+    res = layer.forward_prop(dummy_input)
+    print res

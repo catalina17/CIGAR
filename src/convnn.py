@@ -55,10 +55,10 @@ class ConvNN(object):
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
 
-                # After all examples in the current batch have been processed, update parameters for
-                # each layer
+                # After all examples in the current batch have been processed, update parameters
                 for layer in self.layers:
-                    layer.update_parameters(learning_rate)
+                    if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                        layer.update_parameters(learning_rate)
 
                 batch = self.data_provider.get_next_batch()
 

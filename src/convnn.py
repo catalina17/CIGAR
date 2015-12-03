@@ -1,8 +1,9 @@
+from convnet.activation_layer import ActivationLayer
 from convnet.conv_layer import ConvLayer
 from convnet.globalpooling_layer import GlobalPoolingLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
 from convnet.maxpooling_layer import MaxPoolingLayer
-from util.data_provider import DataProvider
+from data_provider import DataProvider
 
 import numpy as np
 
@@ -109,12 +110,16 @@ class ConvNN(object):
 
 if __name__ == '__main__':
     neural_net = ConvNN([ConvLayer(256, (128, 4), 0.1, False),
+                         ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 4)),
                          ConvLayer(256, (256, 4), 0.1, False),
+                         ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
                          ConvLayer(512, (256, 4), 0.1, False),
+                         ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
                          ConvLayer(512, (512, 4), 0.1, False),
+                         ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
                          FullyConnectedLayer(2048),
                          FullyConnectedLayer(2048),

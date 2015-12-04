@@ -33,9 +33,11 @@ class ConvLayer(Layer):
             self.num_padding_zeros = 0
 
         self.input_shape = None
+        self.current_input = None
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
+        self.current_input = input
 
         padded_input = np.zeros((self.input_shape[0], self.input_shape[1] + self.num_padding_zeros))
         padded_input[0:self.input_shape[0],

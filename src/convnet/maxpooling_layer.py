@@ -14,10 +14,12 @@ class MaxPoolingLayer(Layer):
         self.filter_shape = filter_shape
         print "Filter shape: " + str(filter_shape)
         self.input_shape = None
+        self.current_input = None
         self.max_activation_indices = None
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
+        self.current_input = input
 
         if (len(self.get_output_shape()) == 1):
             output = np.empty((1, self.get_output_shape()[0]))

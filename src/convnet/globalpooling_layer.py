@@ -29,13 +29,13 @@ class GlobalPoolingLayer(Layer):
     def back_prop(self, output_grad):
         mean_output_grad = output_grad[0:self.input_shape[0]]
         max_output_grad = output_grad[self.input_shape[0]:2 * self.input_shape[0]]
-        l2_output_grad = output_grad[2 * self.input_shape:]
+        l2_output_grad = output_grad[2 * self.input_shape[0]:]
 
         input_grad = np.empty(self.input_shape)
         range_f = self.get_output_shape()[0] / 3
         for f in range(range_f):
             mean_input_grad = mean_output_grad[f] / self.input_shape[1]
-            max_input_grad = np.zeros(self.input_shape)
+            max_input_grad = np.zeros(self.input_shape[1])
             max_input_grad[self.max_activation_indices[f]] = max_output_grad[f]
             l2_input_grad = self.current_input[f] / np.sqrt(sum(self.current_input[f] ** 2)) *\
                             l2_output_grad[f]
@@ -68,8 +68,9 @@ class GlobalPoolingLayer(Layer):
         return shape
 
 if __name__ == '__main__':
-    dummy_input = np.ones((4, 4))
-    print "Input: "
+    dummy_input = np.ones((2, 4))
+    dummy_input.T[2] = 2 * np.ones((2,))
+    print "Input:"
     print dummy_input
 
     layer = GlobalPoolingLayer()
@@ -79,3 +80,10 @@ if __name__ == '__main__':
     res = layer.forward_prop(dummy_input)
     print res
     print '\n'
+
+    dummy_output_grad = np.ones((12,))
+    print "Output gradient:"
+    print dummy_output_grad
+
+    print "Backpropagation:"
+    print layer.back_prop(dummy_output_grad)

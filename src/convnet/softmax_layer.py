@@ -16,8 +16,11 @@ class SoftmaxLayer(Layer):
     def back_prop(self, output_grad):
         raise NotImplementedError("Output (Softmax) layer - does not perform backpropagation")
 
-    def get_gradient(self, predicted_output, example_output):
-        raise NotImplementedError()
+    def initial_gradient(self, predicted_output, true_output):
+        return predicted_output - true_output
+
+    def loss(self, predicted_output, true_output):
+        return -np.sum(true_output * np.log(predicted_output / np.sum(predicted_output)))
 
     def set_input_shape(self, shape):
         """

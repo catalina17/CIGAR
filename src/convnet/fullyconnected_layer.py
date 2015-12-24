@@ -50,7 +50,6 @@ class FullyConnectedLayer(Layer):
 
         """
         self.input_shape = shape
-        # self.weights = np.random.randn(shape[0], self.num_nodes)
         self.weights = np.random.normal(scale=0.1, size=(shape[0], self.num_nodes))
         self.d_weights = np.zeros(self.weights.shape)
 

@@ -12,6 +12,9 @@ class ActivationLayer(Layer):
         elif activation_fn == 'sigmoid':
             self.activation_fn = math.sigmoid
             self.d_activation_fn = math.d_sigmoid
+        elif activation_fn == 'softplus':
+            self.activation_fn = math.softplus
+            self.d_activation_fn = math.d_softplus
 
         self.input_shape = None
         self.current_input = None
@@ -34,15 +37,15 @@ class ActivationLayer(Layer):
         return self.input_shape
 
 if __name__ == '__main__':
-    dummy_input = np.zeros((4, 4))
+    dummy_input = np.random.randn(4, 4)
     print "Input:\n", dummy_input
 
     layer = ActivationLayer('ReLU')
     layer.set_input_shape((4, 4))
 
-    print "Forward propagation:\n", layer.forward_prop(dummy_input)
+    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
 
     dummy_output_grad = np.ones((4, 4))
     print "Output gradient:\n", dummy_output_grad
 
-    print "Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)

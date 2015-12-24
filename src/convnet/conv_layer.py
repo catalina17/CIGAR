@@ -26,7 +26,7 @@ class ConvLayer(Layer):
 
         self.d_filter_weights = np.zeros(self.filter_weights.shape)
 
-        self.biases = np.zeros(num_filters)
+        self.biases = np.random.uniform(0.1, 0.2, [num_filters])
         self.d_biases = np.empty(num_filters)
 
         self.weight_decay = weight_decay

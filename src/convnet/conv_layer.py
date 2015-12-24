@@ -19,10 +19,15 @@ class ConvLayer(Layer):
         self.filter_shape = filter_shape
         print "Filter shape: " + str(filter_shape)
 
-        self.filter_weights = np.empty(num_filters, dtype=np.ndarray)
+        self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
         for i in range(num_filters):
             self.filter_weights[i] = np.random.rand(filter_shape[0], filter_shape[1])
+            print "Filter weights for filter " + str(i + 1) + ":\n", self.filter_weights[i]
+
+        self.d_filter_weights = np.zeros(self.filter_weights.shape)
+
         self.biases = np.zeros(num_filters)
+        self.d_biases = np.empty(num_filters)
 
         self.weight_decay = weight_decay
 
@@ -33,33 +38,47 @@ class ConvLayer(Layer):
             self.num_padding_zeros = 0
 
         self.input_shape = None
-        self.current_input = None
+        self.current_padded_input = None
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
-        self.current_input = input
 
         padded_input = np.zeros((self.input_shape[0], self.input_shape[1] + self.num_padding_zeros))
-        padded_input[0:self.input_shape[0],
-                     self.num_padding_zeros / 2:
-                     self.num_padding_zeros / 2 + self.input_shape[1]] = input
+        padded_input[:, self.num_padding_zeros / 2:
+                        self.num_padding_zeros / 2 + self.input_shape[1]] = input
+        self.current_padded_input = padded_input
 
         output = np.empty(self.get_output_shape())
 
-        filter_h = self.filter_shape[0]
         filter_w = self.filter_shape[1]
-        range_i = self.get_output_shape()[1]
+        range_w = self.get_output_shape()[1]
 
         for f in range(self.num_filters):
-            for i in range(range_i):
-                output[f][i] = sum(sum(np.multiply(self.filter_weights[f],
-                                                   padded_input[0:filter_h, i:i+filter_w]))) +\
-                               self.biases[f]
+            for w in range(range_w):
+                output[f][w] = np.sum(np.multiply(self.filter_weights[f],
+                                                  padded_input[:, w:w+filter_w])) + self.biases[f]
 
         return output
 
     def back_prop(self, output_grad):
-        raise NotImplementedError()
+        padded_input_grad = np.zeros((self.input_shape[0],
+                                      self.input_shape[1] + self.num_padding_zeros))
+
+        range_w = self.input_shape[1] + self.num_padding_zeros - self.filter_shape[1] + 1
+        filter_w = self.filter_shape[1]
+        for w in range(range_w):
+            for f in range(self.num_filters):
+                padded_input_grad[:, w:w + filter_w] += output_grad[f][w] * self.filter_weights[f]
+                self.d_filter_weights[f] += output_grad[f][w] *\
+                                            self.current_padded_input[:, w:w + filter_w]
+
+        for f in range(self.num_filters):
+            print "Weight derivatives for filter " + str(f + 1) + ":\n", self.d_filter_weights[f]
+
+        self.d_biases = np.sum(output_grad, axis=1)
+        print "Biases derivatives:\n", self.d_biases
+
+        return padded_input_grad[:, filter_w - 1:range_w]
 
     def set_input_shape(self, shape):
         """
@@ -86,14 +105,23 @@ class ConvLayer(Layer):
         return shape
 
     def update_parameters(self, learning_rate):
-        raise NotImplementedError()
+        self.filter_weights -= learning_rate * self.d_filter_weights
+        self.biases -= learning_rate * self.d_biases
 
 if __name__ == "__main__":
-    dummy_input = np.random.randn(4, 8)
-    print dummy_input
+    dummy_input = np.ones((4, 8))
+    print "Input:\n", dummy_input
 
-    layer = ConvLayer(num_filters=1, filter_shape=(4, 3), weight_decay=0.01, padding_mode=True)
+    layer = ConvLayer(num_filters=3, filter_shape=(4, 3), weight_decay=0.01, padding_mode=True)
     layer.set_input_shape((4, 8))
 
-    res = layer.forward_prop(dummy_input)
-    print res
+    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
+
+    dummy_output_grad = np.ones((3,10)) / 2
+    print "\nOutput gradient:\n", dummy_output_grad
+
+    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
+
+    print "\n--->> Params before update:\n", layer.filter_weights, "\n", layer.biases
+    layer.update_parameters(0.01)
+    print "\n--->> Params after update:\n", layer.filter_weights, "\n", layer.biases

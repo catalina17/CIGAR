@@ -57,3 +57,9 @@ if __name__ == "__main__":
     layer.set_input_shape((3,))
 
     print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
+
+    dummy_output = np.abs(np.random.uniform(0, 1, 3))
+    one_hot_outputs = np.array([1, 0, 0])
+    print "\n--->> Output:\n", dummy_output
+    print "\nGradient:\n", layer.initial_gradient(one_hot_outputs, dummy_output)
+    print "\nLoss:\n", layer.loss(dummy_output, one_hot_outputs)

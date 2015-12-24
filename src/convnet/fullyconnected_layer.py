@@ -50,11 +50,12 @@ class FullyConnectedLayer(Layer):
 
         """
         self.input_shape = shape
-        self.weights = np.random.randn(shape[0], self.num_nodes)
+        # self.weights = np.random.randn(shape[0], self.num_nodes)
+        self.weights = np.random.normal(scale=0.1, size=(shape[0], self.num_nodes))
         self.d_weights = np.zeros(self.weights.shape)
 
         print "FullyConnectedLayer with input shape " + str(shape)
-        print "Weights:\n", self.weights
+        # print "Weights:\n", self.weights
 
     def get_output_shape(self):
         """

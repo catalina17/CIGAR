@@ -3,6 +3,7 @@ from convnet.conv_layer import ConvLayer
 from convnet.globalpooling_layer import GlobalPoolingLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
 from convnet.maxpooling_layer import MaxPoolingLayer
+from convnet.softmax_layer import SoftmaxLayer
 from data_provider import DataProvider
 
 import numpy as np
@@ -50,8 +51,8 @@ class ConvNN(object):
 
                     # Backpropagation phase
                     predicted_output = current_input
-                    current_gradient = self.layers[-1].get_gradient(predicted_output,
-                                                                    training_example[1])
+                    current_gradient = self.layers[-1].initial_gradient(predicted_output,
+                                                                        training_example[1])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
 
@@ -127,7 +128,16 @@ if __name__ == '__main__':
 
                          FullyConnectedLayer(2048, 0.1),
                          FullyConnectedLayer(2048, 0.1),
-                         FullyConnectedLayer(40, 0.1)],
+                         FullyConnectedLayer(40, 0.1),
+                         FullyConnectedLayer(2, 0.1),
+                         SoftmaxLayer()],
                         DataProvider(20))
 
-    neural_net._setup_layers((128, 599), (40, ))
+    neural_net._setup_layers((128, 599), (2, ))
+
+    dummy_input = np.random.uniform(0, 255, [128, 599])
+    for layer in neural_net.layers:
+        dummy_input = layer.forward_prop(dummy_input)
+        # if isinstance(layer, FullyConnectedLayer) or isinstance(layer, SoftmaxLayer):
+        print str(type(layer))
+        print dummy_input

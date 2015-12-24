@@ -21,8 +21,9 @@ class ConvLayer(Layer):
 
         self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
         for i in range(num_filters):
-            self.filter_weights[i] = np.random.rand(filter_shape[0], filter_shape[1])
-            print "Filter weights for filter " + str(i + 1) + ":\n", self.filter_weights[i]
+            #self.filter_weights[i] = np.random.randn(filter_shape[0], filter_shape[1])
+            self.filter_weights[i] = np.random.normal(scale=0.1, size=filter_shape)
+            # print "Filter weights for filter " + str(i + 1) + ":\n", self.filter_weights[i]
         self.d_filter_weights = np.zeros(self.filter_weights.shape)
 
         self.biases = np.random.uniform(0.1, 0.2, [num_filters])

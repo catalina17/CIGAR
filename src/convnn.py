@@ -125,9 +125,9 @@ if __name__ == '__main__':
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(2048),
-                         FullyConnectedLayer(2048),
-                         FullyConnectedLayer(40)],
+                         FullyConnectedLayer(2048, 0.1),
+                         FullyConnectedLayer(2048, 0.1),
+                         FullyConnectedLayer(40, 0.1)],
                         DataProvider(20))
 
     neural_net._setup_layers((128, 599), (40, ))

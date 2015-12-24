@@ -4,7 +4,7 @@ import numpy as np
 
 class FullyConnectedLayer(Layer):
 
-    def __init__(self, num_nodes):
+    def __init__(self, num_nodes, weight_decay):
         """
 
         Parameters
@@ -14,7 +14,9 @@ class FullyConnectedLayer(Layer):
         """
         self.num_nodes = num_nodes
         self.biases = np.zeros(num_nodes)
-        self.d_biases = np.empty(num_nodes)
+        self.d_biases = np.zeros(num_nodes)
+
+        self.weight_decay = weight_decay
 
         self.input_shape = None
         self.current_input = None
@@ -28,11 +30,12 @@ class FullyConnectedLayer(Layer):
         return np.dot(input, self.weights) + self.biases
 
     def back_prop(self, output_grad):
-        self.d_weights = np.dot(np.resize(self.current_input, (self.input_shape[0], 1)),
-                                np.resize(output_grad, (output_grad.shape[0], 1)).T)
+        self.d_weights += np.dot(np.resize(self.current_input, (self.input_shape[0], 1)),
+                                 np.resize(output_grad, (output_grad.shape[0], 1)).T) +\
+                          self.weight_decay * self.weights
         print "Weights derivative:\n", self.d_weights
 
-        self.d_biases = output_grad
+        self.d_biases += output_grad
         print "Biases derivative:\n", self.d_biases
 
         print "Propagated gradient: "
@@ -48,6 +51,8 @@ class FullyConnectedLayer(Layer):
         """
         self.input_shape = shape
         self.weights = np.random.randn(shape[0], self.num_nodes)
+        self.d_weights = np.zeros(self.weights.shape)
+
         print "FullyConnectedLayer with input shape " + str(shape)
         print "Weights:\n", self.weights
 
@@ -73,6 +78,9 @@ class FullyConnectedLayer(Layer):
         """
         self.weights -= learning_rate * self.d_weights
         self.biases -= learning_rate * self.d_biases
+
+        self.d_weights[...] = 0
+        self.d_biases[...] = 0
 
 if __name__ == "__main__":
     dummy_input = np.ones((4,))

@@ -30,12 +30,10 @@ class FullyConnectedLayer(Layer):
     def back_prop(self, output_grad):
         self.d_weights = np.dot(np.resize(self.current_input, (self.input_shape[0], 1)),
                                 np.resize(output_grad, (output_grad.shape[0], 1)).T)
+        print "Weights derivative:\n", self.d_weights
 
-        print "Weights derivative: "
-        print self.d_weights
         self.d_biases = output_grad
-        print "Biases derivative: "
-        print self.d_biases
+        print "Biases derivative:\n", self.d_biases
 
         print "Propagated gradient: "
         return np.dot(output_grad, self.weights.T)
@@ -51,8 +49,7 @@ class FullyConnectedLayer(Layer):
         self.input_shape = shape
         self.weights = np.random.randn(shape[0], self.num_nodes)
         print "FullyConnectedLayer with input shape " + str(shape)
-        print "Weights: "
-        print self.weights
+        print "Weights:\n", self.weights
 
     def get_output_shape(self):
         """
@@ -79,27 +76,18 @@ class FullyConnectedLayer(Layer):
 
 if __name__ == "__main__":
     dummy_input = np.ones((4,))
-    print "Input: "
-    print dummy_input
+    print "Input:\n", dummy_input
 
     layer = FullyConnectedLayer(5)
     layer.set_input_shape((4,))
 
-    print "\n--->> Forward propagation:"
-    print sum(layer.weights)
-    print layer.forward_prop(dummy_input)
+    print "\n--->> Forward propagation:\n", sum(layer.weights), "\n", layer.forward_prop(dummy_input)
 
     dummy_output_grad = np.random.randn(5)
-    print "\nOutput gradient: "
-    print dummy_output_grad
+    print "\nOutput gradient:\n", dummy_output_grad
 
-    print "\n--->> Backpropagation: "
-    print layer.back_prop(dummy_output_grad)
+    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
 
-    print "\n--->> Params before update: "
-    print layer.weights
-    print layer.biases
+    print "\n--->> Params before update:\n", layer.weights, "\n", layer.biases
     layer.update_parameters(0.01)
-    print "\n--->> Params after update: "
-    print layer.weights
-    print layer.biases
+    print "\n--->> Params after update:\n", layer.weights, "\n", layer.biases

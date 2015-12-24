@@ -48,10 +48,9 @@ if __name__ == "__main__":
     dummy_input[0] = 0
     dummy_input[1] = 1
     dummy_input[2] = 2
-    print dummy_input
+    print "Input:\n", dummy_input
 
     layer = SoftmaxLayer()
     layer.set_input_shape((3,))
 
-    res = layer.forward_prop(dummy_input)
-    print res
+    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)

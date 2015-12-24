@@ -66,7 +66,7 @@ class MaxPoolingLayer(Layer):
             for j in range(output_grad.shape[1]):
                 h = self.max_activation_indices[i, j, 0]
                 w = self.max_activation_indices[i, j, 1]
-                input_grad[h][w] = output_grad[i][j]
+                input_grad[h, w] = output_grad[i, j]
 
         return input_grad
 
@@ -106,20 +106,14 @@ class MaxPoolingLayer(Layer):
 
 if __name__ == "__main__":
     dummy_input = np.random.randn(4, 4)
-    print "Input: "
-    print dummy_input
+    print "Input:\n", dummy_input
 
     layer = MaxPoolingLayer(filter_shape=(2,2))
     layer.set_input_shape(dummy_input.shape)
 
-    print "Forward propagation:"
-    res = layer.forward_prop(dummy_input)
-    print res
-    print '\n'
+    print "Forward propagation:\n", layer.forward_prop(dummy_input)
 
     dummy_output_grad = np.ones((2, 2))
-    print "Output gradient: "
-    print dummy_output_grad
+    print "Output gradient:\n", dummy_output_grad
 
-    print "Backpropagation:"
-    print layer.back_prop(dummy_output_grad)
+    print "Backpropagation:\n", layer.back_prop(dummy_output_grad)

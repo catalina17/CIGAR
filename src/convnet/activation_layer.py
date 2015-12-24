@@ -35,20 +35,14 @@ class ActivationLayer(Layer):
 
 if __name__ == '__main__':
     dummy_input = np.zeros((4, 4))
-    print "Input: "
-    print dummy_input
+    print "Input:\n", dummy_input
 
     layer = ActivationLayer('ReLU')
     layer.set_input_shape((4, 4))
 
-    print "Forward propagation:"
-    res = layer.forward_prop(dummy_input)
-    print res
-    print '\n'
+    print "Forward propagation:\n", layer.forward_prop(dummy_input)
 
     dummy_output_grad = np.ones((4, 4))
-    print "Output gradient: "
-    print dummy_output_grad
+    print "Output gradient:\n", dummy_output_grad
 
-    print "Backpropagation:"
-    print layer.back_prop(dummy_output_grad)
+    print "Backpropagation:\n", layer.back_prop(dummy_output_grad)

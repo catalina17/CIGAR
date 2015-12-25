@@ -31,7 +31,7 @@ class SoftmaxLayer(Layer):
         """
         assert len(shape) == 1, "Input shape not suitable for output (Softmax) layer"
         self.num_nodes = shape[0]
-        print "SoftmaxLayer with input shape " + str(shape)
+        # print "SoftmaxLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -42,7 +42,7 @@ class SoftmaxLayer(Layer):
 
         """
         shape = (self.num_nodes, )
-        print "SoftmaxLayer with output shape " + str(shape)
+        # print "SoftmaxLayer with output shape " + str(shape)
         return shape
 
 if __name__ == "__main__":

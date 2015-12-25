@@ -52,7 +52,7 @@ class GlobalPoolingLayer(Layer):
 
         """
         self.input_shape = shape
-        print "GlobalPoolingLayer with input shape " + str(shape)
+        # print "GlobalPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -63,7 +63,7 @@ class GlobalPoolingLayer(Layer):
 
         """
         shape = (3 * self.input_shape[0], )
-        print "GlobalPoolingLayer with output shape " + str(shape)
+        # print "GlobalPoolingLayer with output shape " + str(shape)
         return shape
 
 if __name__ == '__main__':

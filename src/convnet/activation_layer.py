@@ -29,11 +29,11 @@ class ActivationLayer(Layer):
 
     def set_input_shape(self, shape):
         self.input_shape = shape
-        print "ActivationLayer with input shape " + str(shape) + " and activation function " +\
-              str(self.activation_fn.__name__)
+        # print "ActivationLayer with input shape " + str(shape) + " and activation function " +
+        # str(self.activation_fn.__name__)
 
     def get_output_shape(self):
-        print "ActivationLayer with output shape " + str(self.input_shape)
+        # print "ActivationLayer with output shape " + str(self.input_shape)
         return self.input_shape
 
 if __name__ == '__main__':

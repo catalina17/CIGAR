@@ -36,6 +36,7 @@ def spectrograms_for_genre(genre_name):
 
         # Save the spectrogram image
         librosa.display.specshow(librosa.logamplitude(spectrogram, ref_power=numpy.max), fmax=10000)
+        pylab.gcf().set_size_inches(7.72903226, 1.6)
         pylab.savefig(os.path.abspath(os.path.join(os.getcwd(), '../../spectrograms/',
                                                    filepath[:-3] + 'png')),
                       bbox_inches='tight', pad_inches=0)

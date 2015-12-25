@@ -23,7 +23,6 @@ class ConvLayer(Layer):
         self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
         for i in range(num_filters):
             self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale, size=filter_shape)
-            # print "Filter weights for filter " + str(i + 1) + ":\n", self.filter_weights[i]
         self.d_filter_weights = np.zeros(self.filter_weights.shape)
 
         self.biases = np.random.uniform(0.1, 0.2, [num_filters])
@@ -74,10 +73,11 @@ class ConvLayer(Layer):
 
         for f in range(self.num_filters):
             self.d_filter_weights[f] += self.weight_decay * self.filter_weights[f]
-        # print "\nWeight derivatives for filter " + str(20) + ":\n", self.d_filter_weights[20]
 
         self.d_biases += np.sum(output_grad, axis=1)
-        # print "\nBiases derivatives:\n", self.d_biases
+
+        # print "Filter weights derivative ex:\n", self.d_filter_weights[0][0]
+        # print "Biases derivative ex:\n", self.d_biases[0]
 
         return padded_input_grad[:, filter_w - 1:range_w]
 
@@ -90,7 +90,7 @@ class ConvLayer(Layer):
 
         """
         self.input_shape = shape
-        print "ConvLayer with input shape " + str(shape)
+        # print "ConvLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -102,15 +102,15 @@ class ConvLayer(Layer):
         """
         shape = (self.num_filters,
                  self.input_shape[1] + self.num_padding_zeros - self.filter_shape[1] + 1)
-        print "ConvLayer with output shape " + str(shape)
+        # print "ConvLayer with output shape " + str(shape)
         return shape
 
     def update_parameters(self, learning_rate):
         self.filter_weights -= learning_rate * self.d_filter_weights
         self.biases -= learning_rate * self.d_biases
 
-        # print "\nUPDATED filter weights:\n", self.filter_weights
-        # print "\nUPDATED biases:\n", self.biases
+        print "\nUPDATED filter weights ex:\n", self.filter_weights[0][0]
+        print "\nUPDATED biases ex:\n", self.biases[0]
 
         self.d_filter_weights[...] = 0
         self.d_biases[...] = 0

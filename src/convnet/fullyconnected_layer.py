@@ -36,12 +36,11 @@ class FullyConnectedLayer(Layer):
         self.d_weights += np.dot(np.resize(self.current_input, (self.input_shape[0], 1)),
                                  np.resize(output_grad, (output_grad.shape[0], 1)).T) +\
                           self.weight_decay * self.weights
-        print "Weights derivative:\n", self.d_weights
+        # print "Weights derivative ex:\n", self.d_weights[0][0]
 
         self.d_biases += output_grad
-        # print "Biases derivative:\n", self.d_biases
+        # print "Biases derivative ex:\n", self.d_biases[0]
 
-        # print "Propagated gradient: "
         return np.dot(output_grad, self.weights.T)
 
     def set_input_shape(self, shape):
@@ -57,8 +56,7 @@ class FullyConnectedLayer(Layer):
                                         size=(shape[0], self.num_nodes))
         self.d_weights = np.zeros(self.weights.shape)
 
-        print "FullyConnectedLayer with input shape " + str(shape)
-        # print "Weights:\n", self.weights
+        # print "FullyConnectedLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -69,7 +67,7 @@ class FullyConnectedLayer(Layer):
 
         """
         shape = (self.num_nodes, )
-        print "FullyConnectedLayer with output shape " + str(shape)
+        # print "FullyConnectedLayer with output shape " + str(shape)
         return shape
 
     def update_parameters(self, learning_rate):
@@ -83,8 +81,8 @@ class FullyConnectedLayer(Layer):
         self.weights -= learning_rate * self.d_weights
         self.biases -= learning_rate * self.d_biases
 
-        # print "\nUPDATED weights:\n", self.weights
-        # print "\nUPDATED biases:\n", self.biases
+        print "\nUPDATED weights ex:\n", self.weights[0][0]
+        print "\nUPDATED biases ex:\n", self.biases[0]
 
         self.d_weights[...] = 0
         self.d_biases[...] = 0

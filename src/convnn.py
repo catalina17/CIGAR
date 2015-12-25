@@ -77,18 +77,43 @@ class ConvNN(object):
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
 
-                # After all examples in the current batch have been processed, update parameters
+                # Update parameters - batch mode
                 for layer in self.layers:
                     if type(layer) in [ConvLayer, FullyConnectedLayer]:
                         layer.update_parameters(learning_rate)
 
                 batch = self.data_provider.get_next_batch()
 
-    def error(self, training_batch):
-        raise NotImplementedError()
+            all_training_data = self.data_provider.get_all_training_data()
+            print "\nTraining error:\n", self.error(all_training_data)
+            print "\nTraining loss:\n", self.training_loss(all_training_data)
+
+    def error(self, batch):
+        error = 0.0
+
+        for training_example in batch:
+            current_input = training_example[0]
+            for layer in self.layers:
+                current_input = layer.forward_prop(current_input)
+
+            if np.argmax(current_input) != np.argmax(training_example[1]):
+                error += 1.0
+
+        error /= batch.shape[0]
+        return error
 
     def training_loss(self, training_batch):
-        raise NotImplementedError()
+        loss = 0.0
+
+        for training_example in training_batch:
+            current_input = training_example[0]
+            for layer in self.layers:
+                current_input = layer.forward_prop(current_input)
+
+            loss += self.layers[-1].loss(current_input, training_example[1])
+
+        loss /= training_batch.shape[0]
+        return loss
 
     def predict(self, input):
         """
@@ -128,23 +153,24 @@ if __name__ == '__main__':
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.1),
-                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.1),
-                         FullyConnectedLayer(40, weight_decay=0.01, weight_scale=0.1),
-                         FullyConnectedLayer(2, weight_decay=0.01, weight_scale=0.1),
+                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.01),
+                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.01),
+                         FullyConnectedLayer(40, weight_decay=0.01, weight_scale=0.01),
+                         FullyConnectedLayer(2, weight_decay=0.01, weight_scale=0.01),
                          SoftmaxLayer()],
                         DataProvider(20))
 
     neural_net._setup_layers((128, 599), (2, ))
 
-    for i in range(5):
+    for i in range(100):
+        print "\nITERATION " + str(i + 1) + "\n"
         dummy_input = np.random.uniform(0, 255, [128, 599])
-        # dummy_input /= np.sum(dummy_input)
-        print "\nCNN input:\n", dummy_input
+        dummy_input /= np.sum(dummy_input)
 
         for layer in neural_net.layers:
             dummy_input = layer.forward_prop(dummy_input)
-            print "LAYER--->>:", str(type(layer)), "\n", dummy_input
+            if isinstance(layer, SoftmaxLayer):
+                print "Softmax output--->>:", str(type(layer)), "\n", dummy_input
 
         print "\n--->>BACKPROPAGATION\n"
         dummy_output = np.array([1, 0])
@@ -153,10 +179,8 @@ if __name__ == '__main__':
 
         for layer in reversed(neural_net.layers[:-1]):
             current_gradient = layer.back_prop(current_gradient)
-            # print "LAYER--->>:", str(type(layer)), "\n", current_gradient
 
         print "\n--->>PARAM UPDATE\n"
         for layer in neural_net.layers:
             if isinstance(layer, (ConvLayer, FullyConnectedLayer)):
-                print str(type(layer))
                 layer.update_parameters(0.01)

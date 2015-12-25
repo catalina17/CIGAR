@@ -8,11 +8,10 @@ class SoftmaxLayer(Layer):
         self.num_nodes = None
 
     def forward_prop(self, input):
-        input -= np.max(input)
-        output = np.exp(input) / np.sum(np.exp(input))
-
-        return output
-
+        input /= (np.amax(input) - np.amin(input))
+        exp = np.exp(input)
+        return exp / np.sum(exp)
+    
     def back_prop(self, output_grad):
         raise NotImplementedError("Output (Softmax) layer - does not perform backpropagation")
 

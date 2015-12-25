@@ -112,19 +112,19 @@ class ConvNN(object):
         return predicted_class
 
 if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayer(256, (128, 4), 0.1, False),
+    neural_net = ConvNN([ConvLayer(256, (128, 4), 0.1, 0.01, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 4)),
 
-                         ConvLayer(256, (256, 4), 0.1, False),
+                         ConvLayer(256, (256, 4), 0.1, 0.01, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
 
-                         ConvLayer(512, (256, 4), 0.1, False),
+                         ConvLayer(512, (256, 4), 0.1, 0.01, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
 
-                         ConvLayer(512, (512, 4), 0.1, False),
+                         ConvLayer(512, (512, 4), 0.1, 0.01, False),
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 

@@ -23,6 +23,27 @@ class ConvNN(object):
         self.layers = layers
         self.data_provider = data_provider
 
+    def _setup_layers(self, cnn_input_shape, cnn_output_shape):
+        """
+
+        Parameters
+        ----------
+        cnn_input_shape : tuple
+        cnn_output_shape : tuple
+
+        """
+        current_shape = cnn_input_shape
+        for layer in self.layers:
+            layer.set_input_shape(current_shape)
+            current_shape = layer.get_output_shape()
+            print "DONE setting up " + str(type(layer)) + '\n'
+
+        assert current_shape == cnn_output_shape, "Computed output shape " + str(current_shape) +\
+                                                  " does not match given output shape " +\
+                                                  str(cnn_output_shape)
+
+        print "ConvNN setup successful!"
+
     def train(self, learning_rate, num_iters):
         """
 
@@ -63,26 +84,11 @@ class ConvNN(object):
 
                 batch = self.data_provider.get_next_batch()
 
-    def _setup_layers(self, cnn_input_shape, cnn_output_shape):
-        """
+    def error(self, training_batch):
+        raise NotImplementedError()
 
-        Parameters
-        ----------
-        cnn_input_shape : tuple
-        cnn_output_shape : tuple
-
-        """
-        current_shape = cnn_input_shape
-        for layer in self.layers:
-            layer.set_input_shape(current_shape)
-            current_shape = layer.get_output_shape()
-            print "DONE setting up " + str(type(layer)) + '\n'
-
-        assert current_shape == cnn_output_shape, "Computed output shape " + str(current_shape) +\
-                                                  " does not match given output shape " +\
-                                                  str(cnn_output_shape)
-
-        print "ConvNN setup successful!"
+    def training_loss(self, training_batch):
+        raise NotImplementedError()
 
     def predict(self, input):
         """
@@ -105,10 +111,6 @@ class ConvNN(object):
         predicted_class = np.argmax(current_input)
         return predicted_class
 
-    def _gradient_check(self, input, output):
-        raise NotImplementedError()
-
-
 if __name__ == '__main__':
     neural_net = ConvNN([ConvLayer(256, (128, 4), 0.1, False),
                          ActivationLayer('ReLU'),
@@ -126,18 +128,30 @@ if __name__ == '__main__':
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(2048, 0.1),
-                         FullyConnectedLayer(2048, 0.1),
-                         FullyConnectedLayer(40, 0.1),
-                         FullyConnectedLayer(2, 0.1),
+                         FullyConnectedLayer(2048, weight_decay=0.1, weight_scale=0.01),
+                         FullyConnectedLayer(2048, weight_decay=0.1, weight_scale=0.01),
+                         FullyConnectedLayer(40, weight_decay=0.1, weight_scale=0.01),
+                         FullyConnectedLayer(2, weight_decay=0.1, weight_scale=0.01),
                          SoftmaxLayer()],
                         DataProvider(20))
 
     neural_net._setup_layers((128, 599), (2, ))
 
     dummy_input = np.random.uniform(0, 255, [128, 599])
+    # dummy_input /= np.sum(dummy_input)
+    print "CNN input:\n", dummy_input
+
     for layer in neural_net.layers:
         dummy_input = layer.forward_prop(dummy_input)
-        # if isinstance(layer, FullyConnectedLayer) or isinstance(layer, SoftmaxLayer):
-        print str(type(layer))
+        print "LAYER--->>:", str(type(layer))
         print dummy_input
+
+    print "\n--->>BACKPROPAGATION\n"
+    dummy_output = np.array([1, 0])
+    current_gradient = neural_net.layers[-1].initial_gradient(dummy_input, dummy_output)
+    print "\nInitial gradient:\n", current_gradient
+
+    for layer in reversed(neural_net.layers[:-1]):
+        current_gradient = layer.back_prop(current_gradient)
+        print "LAYER--->>:", str(type(layer))
+        print current_gradient

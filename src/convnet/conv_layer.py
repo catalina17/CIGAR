@@ -4,7 +4,7 @@ import numpy as np
 
 class ConvLayer(Layer):
 
-    def __init__(self, num_filters, filter_shape, weight_decay, padding_mode=True):
+    def __init__(self, num_filters, filter_shape, weight_decay, weight_scale, padding_mode=True):
         """
 
         Parameters
@@ -12,6 +12,7 @@ class ConvLayer(Layer):
         num_filters : int
         filter_shape : tuple
         weight_decay : float
+        weight_scale : float
         padding_mode : bool
 
         """
@@ -21,7 +22,7 @@ class ConvLayer(Layer):
 
         self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
         for i in range(num_filters):
-            self.filter_weights[i] = np.random.normal(scale=0.1, size=filter_shape)
+            self.filter_weights[i] = np.random.normal(scale=weight_scale, size=filter_shape)
             # print "Filter weights for filter " + str(i + 1) + ":\n", self.filter_weights[i]
         self.d_filter_weights = np.zeros(self.filter_weights.shape)
 
@@ -73,10 +74,10 @@ class ConvLayer(Layer):
 
         for f in range(self.num_filters):
             self.d_filter_weights[f] += self.weight_decay * self.filter_weights[f]
-            print "Weight derivatives for filter " + str(f + 1) + ":\n", self.d_filter_weights[f]
+            # print "Weight derivatives for filter " + str(f + 1) + ":\n", self.d_filter_weights[f]
 
         self.d_biases += np.sum(output_grad, axis=1)
-        print "Biases derivatives:\n", self.d_biases
+        # print "Biases derivatives:\n", self.d_biases
 
         return padded_input_grad[:, filter_w - 1:range_w]
 
@@ -115,7 +116,8 @@ if __name__ == "__main__":
     dummy_input = np.ones((4, 8))
     print "Input:\n", dummy_input
 
-    layer = ConvLayer(num_filters=3, filter_shape=(4, 3), weight_decay=0.1, padding_mode=True)
+    layer = ConvLayer(num_filters=3, filter_shape=(4, 3), weight_decay=0.1, weight_scale=0.01,
+                      padding_mode=True)
     layer.set_input_shape((4, 8))
 
     print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)

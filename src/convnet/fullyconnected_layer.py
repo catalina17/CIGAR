@@ -4,12 +4,14 @@ import numpy as np
 
 class FullyConnectedLayer(Layer):
 
-    def __init__(self, num_nodes, weight_decay):
+    def __init__(self, num_nodes, weight_decay, weight_scale):
         """
 
         Parameters
         ----------
         num_nodes : int
+        weight_decay : float
+        weight_scale : float
 
         """
         self.num_nodes = num_nodes
@@ -17,6 +19,7 @@ class FullyConnectedLayer(Layer):
         self.d_biases = np.zeros(num_nodes)
 
         self.weight_decay = weight_decay
+        self.weight_scale = weight_scale
 
         self.input_shape = None
         self.current_input = None
@@ -33,12 +36,12 @@ class FullyConnectedLayer(Layer):
         self.d_weights += np.dot(np.resize(self.current_input, (self.input_shape[0], 1)),
                                  np.resize(output_grad, (output_grad.shape[0], 1)).T) +\
                           self.weight_decay * self.weights
-        print "Weights derivative:\n", self.d_weights
+        # print "Weights derivative:\n", self.d_weights
 
         self.d_biases += output_grad
-        print "Biases derivative:\n", self.d_biases
+        # print "Biases derivative:\n", self.d_biases
 
-        print "Propagated gradient: "
+        # print "Propagated gradient: "
         return np.dot(output_grad, self.weights.T)
 
     def set_input_shape(self, shape):
@@ -50,7 +53,7 @@ class FullyConnectedLayer(Layer):
 
         """
         self.input_shape = shape
-        self.weights = np.random.normal(scale=0.1, size=(shape[0], self.num_nodes))
+        self.weights = np.random.normal(self.weight_scale, size=(shape[0], self.num_nodes))
         self.d_weights = np.zeros(self.weights.shape)
 
         print "FullyConnectedLayer with input shape " + str(shape)
@@ -86,7 +89,7 @@ if __name__ == "__main__":
     dummy_input = np.ones((4,))
     print "Input:\n", dummy_input
 
-    layer = FullyConnectedLayer(5)
+    layer = FullyConnectedLayer(5, weight_decay=0.1, weight_scale=0.01)
     layer.set_input_shape((4,))
 
     print "\n--->> Forward propagation:\n", sum(layer.weights), "\n", layer.forward_prop(dummy_input)

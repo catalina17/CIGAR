@@ -17,13 +17,13 @@ class GlobalPoolingLayer(Layer):
         self.max_activation_indices = np.empty(self.get_output_shape())
 
         for f in range(self.input_shape[0]):
-            # Mean pooling
-            output[f] = np.mean(input[f])
+            # Average pooling
+            output[f] = np.sum(input[f])
             # Max pooling
             output[self.input_shape[0] + f] = np.max(input[f])
             self.max_activation_indices[f] = np.argmax(input[f])
-            # L2 pooling
-            output[2 * self.input_shape[0] + f] = np.sqrt(sum(input[f] ** 2))
+            # L2-norm pooling
+            output[2 * self.input_shape[0] + f] = np.sum(input[f] ** 2)
         return output
 
     def back_prop(self, output_grad):
@@ -34,13 +34,12 @@ class GlobalPoolingLayer(Layer):
         input_grad = np.empty(self.input_shape)
         range_f = self.input_shape[0]
         for f in range(range_f):
-            mean_input_grad = mean_output_grad[f] / self.input_shape[1]
-            max_input_grad = np.zeros(self.input_shape[1])
-            max_input_grad[self.max_activation_indices[f]] = max_output_grad[f]
-            l2_input_grad = self.current_input[f] / np.sqrt(sum(self.current_input[f] ** 2)) *\
-                            l2_output_grad[f]
-
-            input_grad[f] = mean_input_grad + max_input_grad + l2_input_grad
+            # Average grad
+            input_grad[f] = mean_output_grad[f]
+            # Max grad
+            input_grad[f, self.max_activation_indices[f]] += max_output_grad[f]
+            # L2-norm grad
+            input_grad[f] += 2 * self.current_input[f] * l2_output_grad[f]
 
         return input_grad
 

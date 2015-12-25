@@ -36,13 +36,13 @@ class ConvNN(object):
         for layer in self.layers:
             layer.set_input_shape(current_shape)
             current_shape = layer.get_output_shape()
-            print "DONE setting up " + str(type(layer)) + '\n'
+            # print "DONE setting up " + str(type(layer)) + '\n'
 
         assert current_shape == cnn_output_shape, "Computed output shape " + str(current_shape) +\
                                                   " does not match given output shape " +\
                                                   str(cnn_output_shape)
 
-        print "ConvNN setup successful!"
+        # print "ConvNN setup successful!"
 
     def train(self, learning_rate, num_iters):
         """
@@ -112,46 +112,51 @@ class ConvNN(object):
         return predicted_class
 
 if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayer(256, (128, 4), 0.1, 0.01, False),
+    neural_net = ConvNN([ConvLayer(256, (128, 4), 0.01, 0.01, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 4)),
 
-                         ConvLayer(256, (256, 4), 0.1, 0.01, False),
+                         ConvLayer(128, (256, 4), 0.01, 0.01, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
 
-                         ConvLayer(512, (256, 4), 0.1, 0.01, False),
+                         ConvLayer(64, (128, 4), 0.01, 0.01, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
 
-                         ConvLayer(512, (512, 4), 0.1, 0.01, False),
+                         ConvLayer(32, (64, 4), 0.01, 0.01, False),
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(2048, weight_decay=0.1, weight_scale=0.01),
-                         FullyConnectedLayer(2048, weight_decay=0.1, weight_scale=0.01),
-                         FullyConnectedLayer(40, weight_decay=0.1, weight_scale=0.01),
-                         FullyConnectedLayer(2, weight_decay=0.1, weight_scale=0.01),
+                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.1),
+                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.1),
+                         FullyConnectedLayer(40, weight_decay=0.01, weight_scale=0.1),
+                         FullyConnectedLayer(2, weight_decay=0.01, weight_scale=0.1),
                          SoftmaxLayer()],
                         DataProvider(20))
 
     neural_net._setup_layers((128, 599), (2, ))
 
-    dummy_input = np.random.uniform(0, 255, [128, 599])
-    # dummy_input /= np.sum(dummy_input)
-    print "CNN input:\n", dummy_input
+    for i in range(5):
+        dummy_input = np.random.uniform(0, 255, [128, 599])
+        # dummy_input /= np.sum(dummy_input)
+        print "\nCNN input:\n", dummy_input
 
-    for layer in neural_net.layers:
-        dummy_input = layer.forward_prop(dummy_input)
-        print "LAYER--->>:", str(type(layer))
-        print dummy_input
+        for layer in neural_net.layers:
+            dummy_input = layer.forward_prop(dummy_input)
+            print "LAYER--->>:", str(type(layer)), "\n", dummy_input
 
-    print "\n--->>BACKPROPAGATION\n"
-    dummy_output = np.array([1, 0])
-    current_gradient = neural_net.layers[-1].initial_gradient(dummy_input, dummy_output)
-    print "\nInitial gradient:\n", current_gradient
+        print "\n--->>BACKPROPAGATION\n"
+        dummy_output = np.array([1, 0])
+        current_gradient = neural_net.layers[-1].initial_gradient(dummy_input, dummy_output)
+        print "\nInitial gradient:\n", current_gradient
 
-    for layer in reversed(neural_net.layers[:-1]):
-        current_gradient = layer.back_prop(current_gradient)
-        print "LAYER--->>:", str(type(layer))
-        print current_gradient
+        for layer in reversed(neural_net.layers[:-1]):
+            current_gradient = layer.back_prop(current_gradient)
+            # print "LAYER--->>:", str(type(layer)), "\n", current_gradient
+
+        print "\n--->>PARAM UPDATE\n"
+        for layer in neural_net.layers:
+            if isinstance(layer, (ConvLayer, FullyConnectedLayer)):
+                print str(type(layer))
+                layer.update_parameters(0.01)

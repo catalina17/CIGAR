@@ -22,7 +22,7 @@ class ConvLayer(Layer):
 
         self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
         for i in range(num_filters):
-            self.filter_weights[i] = np.random.normal(scale=weight_scale, size=filter_shape)
+            self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale, size=filter_shape)
             # print "Filter weights for filter " + str(i + 1) + ":\n", self.filter_weights[i]
         self.d_filter_weights = np.zeros(self.filter_weights.shape)
 
@@ -74,10 +74,10 @@ class ConvLayer(Layer):
 
         for f in range(self.num_filters):
             self.d_filter_weights[f] += self.weight_decay * self.filter_weights[f]
-            # print "Weight derivatives for filter " + str(f + 1) + ":\n", self.d_filter_weights[f]
+        # print "\nWeight derivatives for filter " + str(20) + ":\n", self.d_filter_weights[20]
 
         self.d_biases += np.sum(output_grad, axis=1)
-        # print "Biases derivatives:\n", self.d_biases
+        # print "\nBiases derivatives:\n", self.d_biases
 
         return padded_input_grad[:, filter_w - 1:range_w]
 
@@ -108,6 +108,9 @@ class ConvLayer(Layer):
     def update_parameters(self, learning_rate):
         self.filter_weights -= learning_rate * self.d_filter_weights
         self.biases -= learning_rate * self.d_biases
+
+        # print "\nUPDATED filter weights:\n", self.filter_weights
+        # print "\nUPDATED biases:\n", self.biases
 
         self.d_filter_weights[...] = 0
         self.d_biases[...] = 0

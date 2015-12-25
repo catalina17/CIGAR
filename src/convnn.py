@@ -66,14 +66,14 @@ class ConvNN(object):
             while batch:
                 for training_example in batch:
                     # Forward propagation phase -- calculate output for training example
-                    current_input = training_example[0]
+                    current_input = training_example['spec']
                     for layer in self.layers:
                         current_input = layer.forward_prop(current_input)
 
                     # Backpropagation phase
                     predicted_output = current_input
                     current_gradient = self.layers[-1].initial_gradient(predicted_output,
-                                                                        training_example[1])
+                                                                        training_example['out'])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
 
@@ -92,11 +92,11 @@ class ConvNN(object):
         error = 0.0
 
         for training_example in batch:
-            current_input = training_example[0]
+            current_input = training_example['spec']
             for layer in self.layers:
                 current_input = layer.forward_prop(current_input)
 
-            if np.argmax(current_input) != np.argmax(training_example[1]):
+            if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
 
         error /= batch.shape[0]
@@ -106,11 +106,11 @@ class ConvNN(object):
         loss = 0.0
 
         for training_example in training_batch:
-            current_input = training_example[0]
+            current_input = training_example['spec']
             for layer in self.layers:
                 current_input = layer.forward_prop(current_input)
 
-            loss += self.layers[-1].loss(current_input, training_example[1])
+            loss += self.layers[-1].loss(current_input, training_example['out'])
 
         loss /= training_batch.shape[0]
         return loss

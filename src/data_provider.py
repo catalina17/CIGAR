@@ -1,4 +1,5 @@
 import numpy as np
+import pylab
 from scipy.misc import imread
 
 
@@ -33,10 +34,11 @@ class DataProvider(object):
     def setup(self):
         self.dataset = np.empty((self.num_genres, self.genre_dataset_size), dtype=dict)
         for genre in self.genres:
+            igenre = 0
+            if genre == 'metal':
+                igenre = 1
+
             for i in range(self.genre_dataset_size):
-                igenre = 0
-                if genre == 'metal':
-                    igenre = 1
                 self.dataset[igenre, i] = self._get_next_example(genre, i)
 
             np.random.shuffle(self.dataset[igenre])
@@ -59,10 +61,10 @@ class DataProvider(object):
             return None
 
     def get_all_training_data(self):
-        return np.flatten(self.dataset[:, :self.genre_dataset_size * 8 / 10])
+        return self.dataset[:, :self.genre_dataset_size * 8 / 10].flatten()
 
     def get_test_data(self):
-        return np.flatten(self.dataset[:, self.genre_dataset_size * 8 / 10:])
+        return self.dataset[:, self.genre_dataset_size * 8 / 10:].flatten()
 
     def reset(self):
         self.current_batch_start_index = 0
@@ -87,17 +89,22 @@ class DataProvider(object):
             id_str = '0' + id_str
         filename = '../../spectrograms/' + genre + '/' + genre + '.' + id_str + '.png'
         im = imread(filename)
+        im_gray = im[:,:,0] * 0.299 + im[:,:,1] * 0.587 + im[:,:,2] * 0.114
 
-        a = np.square(im[:,:,:3] / 1.0)
-        spectrogram = np.sqrt(np.sum(a, axis=2)) / 255.0
         output = np.zeros(self.num_genres)
         if genre == 'classical':
             output[0] = 1
         else:
             output[1] = 1
 
-        return dict(spec=spectrogram, out=output)
+        return dict(spec=im_gray, out=output)
 
 if __name__ == '__main__':
     data_provider = DataProvider(10)
     data_provider.setup()
+
+    a = data_provider.get_all_training_data()
+    b = data_provider.get_test_data()
+
+    print a.shape
+    print b.shape

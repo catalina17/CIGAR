@@ -81,9 +81,6 @@ class FullyConnectedLayer(Layer):
         self.weights -= learning_rate * self.d_weights
         self.biases -= learning_rate * self.d_biases
 
-        # print "\nUPDATED weights ex:\n", self.weights[0][0]
-        # print "\nUPDATED biases ex:\n", self.biases[0]
-
         self.d_weights[...] = 0
         self.d_biases[...] = 0
 

@@ -88,7 +88,7 @@ class ConvNN(object):
                                                                         training_example['out'])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
-                        print np.mean(current_gradient)
+                        # print np.std(current_gradient)
 
                     # Update parameters - online mode
                     for layer in self.layers:
@@ -99,6 +99,8 @@ class ConvNN(object):
 
             all_training_data = self.data_provider.get_all_training_data()
             self.error_and_loss(all_training_data)
+
+            self.test()
 
     def error_and_loss(self, batch):
         error = 0.0
@@ -149,12 +151,8 @@ class ConvNN(object):
     def test(self):
         test_data = self.data_provider.get_test_data()
         test_error = 0.0
-        count = 0
 
         for test_example in test_data:
-            count += 1
-            print "Test example #", str(count)
-
             output_class = self.predict(test_example['spec'])
             print "Actual ", str(np.argmax(test_example['out']))
             if output_class != np.argmax(test_example['out']):
@@ -197,42 +195,17 @@ if __name__ == '__main__':
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(40, weight_decay=0, weight_scale=0.07),
-                         FullyConnectedLayer(10, weight_decay=0, weight_scale=0.15),
-                         FullyConnectedLayer(2, weight_decay=0, weight_scale=0.3),
+                         FullyConnectedLayer(64, weight_decay=0, weight_scale=0.072),
+                         ActivationLayer('ReLU'),
+                         FullyConnectedLayer(32, weight_decay=0, weight_scale=0.125),
+                         ActivationLayer('ReLU'),
+                         FullyConnectedLayer(2, weight_decay=0, weight_scale=0.1),
                          SoftmaxLayer()],
                         DataProvider(4))
 
     neural_net._setup_layers((128, 599), (2, ))
 
     time1 = time.time()
-    neural_net.train(learning_rate=0.01, num_iters=3)
+    neural_net.train(learning_rate=0.01, num_iters=20)
     time2 = time.time()
-    print('Time taken to train: %.1fs' % (time2 - time1))
-
-    neural_net.test()
-
-    """
-    for i in range(100):
-        print "\nITERATION " + str(i + 1) + "\n"
-        dummy_input = np.random.uniform(0, 255, [128, 599])
-        dummy_input /= np.sum(dummy_input)
-
-        for layer in neural_net.layers:
-            dummy_input = layer.forward_prop(dummy_input)
-            if isinstance(layer, SoftmaxLayer):
-                print "Softmax output--->>:", str(type(layer)), "\n", dummy_input
-
-        print "\n--->>BACKPROPAGATION\n"
-        dummy_output = np.array([1, 0])
-        current_gradient = neural_net.layers[-1].initial_gradient(dummy_input, dummy_output)
-        print "\nInitial gradient:\n", current_gradient
-
-        for layer in reversed(neural_net.layers[:-1]):
-            current_gradient = layer.back_prop(current_gradient)
-
-        print "\n--->>PARAM UPDATE\n"
-        for layer in neural_net.layers:
-            if isinstance(layer, (ConvLayer, FullyConnectedLayer)):
-                layer.update_parameters(0.01)
-    """
+    print('Time taken: %.1fs' % (time2 - time1))

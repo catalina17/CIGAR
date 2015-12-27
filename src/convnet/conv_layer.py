@@ -25,7 +25,7 @@ class ConvLayer(Layer):
             self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale, size=filter_shape)
         self.d_filter_weights = np.zeros(self.filter_weights.shape)
 
-        self.biases = np.random.uniform(0.1, 0.2, [num_filters])
+        self.biases = np.zeros(num_filters)
         self.d_biases = np.zeros(num_filters)
 
         self.weight_decay = weight_decay
@@ -108,9 +108,6 @@ class ConvLayer(Layer):
     def update_parameters(self, learning_rate):
         self.filter_weights -= learning_rate * self.d_filter_weights
         self.biases -= learning_rate * self.d_biases
-
-        # print "\nUPDATED filter weights ex:\n", self.filter_weights[0][0]
-        # print "\nUPDATED biases ex:\n", self.biases[0]
 
         self.d_filter_weights[...] = 0
         self.d_biases[...] = 0

@@ -7,6 +7,7 @@ from convnet.softmax_layer import SoftmaxLayer
 from data_provider import DataProvider
 
 import numpy as np
+import time
 
 
 class ConvNN(object):
@@ -56,15 +57,23 @@ class ConvNN(object):
         # Initialise layers with corresponding input/output dimensions
         self._setup_layers(self.data_provider.get_input_shape(),
                            self.data_provider.get_output_shape())
+        self.data_provider.setup()
 
         for it in range(num_iters):
             print "ConvNN training: iteration #" + str(it + 1)
 
             self.data_provider.reset()
             batch = self.data_provider.get_next_batch()
+            batch_count = 0
             # If available, use the next batch of training examples to train network
-            while batch:
+            while not(batch is None):
+                batch_count += 1
+                print "Batch #", str(batch_count)
+
+                count = 0
                 for training_example in batch:
+                    count += 1
+
                     # Forward propagation phase -- calculate output for training example
                     current_input = training_example['spec']
                     for layer in self.layers:
@@ -72,21 +81,42 @@ class ConvNN(object):
 
                     # Backpropagation phase
                     predicted_output = current_input
+                    print "Predicted output: ", predicted_output,\
+                          "--- True output: ", training_example['out']
+
                     current_gradient = self.layers[-1].initial_gradient(predicted_output,
                                                                         training_example['out'])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
+                        print np.mean(current_gradient)
 
-                # Update parameters - batch mode
-                for layer in self.layers:
-                    if type(layer) in [ConvLayer, FullyConnectedLayer]:
-                        layer.update_parameters(learning_rate)
+                    # Update parameters - online mode
+                    for layer in self.layers:
+                        if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                            layer.update_parameters(learning_rate)
 
                 batch = self.data_provider.get_next_batch()
 
             all_training_data = self.data_provider.get_all_training_data()
-            print "\nTraining error:\n", self.error(all_training_data)
-            print "\nTraining loss:\n", self.training_loss(all_training_data)
+            self.error_and_loss(all_training_data)
+
+    def error_and_loss(self, batch):
+        error = 0.0
+        loss = 0.0
+
+        for training_example in batch:
+            current_input = training_example['spec']
+            for layer in self.layers:
+                current_input = layer.forward_prop(current_input)
+
+            print "Predicted output: ", current_input, "--- True output: ", training_example['out']
+
+            if np.argmax(current_input) != np.argmax(training_example['out']):
+                error += 1.0
+            loss += self.layers[-1].loss(current_input, training_example['out'])
+
+        print "\nTraining error:\n", error / batch.shape[0]
+        print "\nTraining loss:\n", loss
 
     def error(self, batch):
         error = 0.0
@@ -99,6 +129,7 @@ class ConvNN(object):
             if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
 
+        print error
         error /= batch.shape[0]
         return error
 
@@ -114,6 +145,22 @@ class ConvNN(object):
 
         loss /= training_batch.shape[0]
         return loss
+
+    def test(self):
+        test_data = self.data_provider.get_test_data()
+        test_error = 0.0
+        count = 0
+
+        for test_example in test_data:
+            count += 1
+            print "Test example #", str(count)
+
+            output_class = self.predict(test_example['spec'])
+            print "Actual ", str(np.argmax(test_example['out']))
+            if output_class != np.argmax(test_example['out']):
+                test_error += 1.0
+
+        print "Test error:", test_error / test_data.shape[0]
 
     def predict(self, input):
         """
@@ -133,35 +180,39 @@ class ConvNN(object):
             current_input = layer.forward_prop(current_input)
 
         # Compute predicted output
+        print "Predicted ", current_input
         predicted_class = np.argmax(current_input)
         return predicted_class
 
 if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayer(256, (128, 4), 0.01, 0.01, False),
+    neural_net = ConvNN([ConvLayer(64, (128, 4), 0, 0.044, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 4)),
 
-                         ConvLayer(128, (256, 4), 0.01, 0.01, False),
+                         ConvLayer(64, (64, 4), 0, 0.0625, False),
                          ActivationLayer('ReLU'),
                          MaxPoolingLayer((1, 2)),
 
-                         ConvLayer(64, (128, 4), 0.01, 0.01, False),
-                         ActivationLayer('ReLU'),
-                         MaxPoolingLayer((1, 2)),
-
-                         ConvLayer(32, (64, 4), 0.01, 0.01, False),
+                         ConvLayer(64, (64, 4), 0, 0.0625, False),
                          ActivationLayer('ReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.01),
-                         FullyConnectedLayer(512, weight_decay=0.01, weight_scale=0.01),
-                         FullyConnectedLayer(40, weight_decay=0.01, weight_scale=0.01),
-                         FullyConnectedLayer(2, weight_decay=0.01, weight_scale=0.01),
+                         FullyConnectedLayer(40, weight_decay=0, weight_scale=0.07),
+                         FullyConnectedLayer(10, weight_decay=0, weight_scale=0.15),
+                         FullyConnectedLayer(2, weight_decay=0, weight_scale=0.3),
                          SoftmaxLayer()],
-                        DataProvider(20))
+                        DataProvider(4))
 
     neural_net._setup_layers((128, 599), (2, ))
 
+    time1 = time.time()
+    neural_net.train(learning_rate=0.01, num_iters=3)
+    time2 = time.time()
+    print('Time taken to train: %.1fs' % (time2 - time1))
+
+    neural_net.test()
+
+    """
     for i in range(100):
         print "\nITERATION " + str(i + 1) + "\n"
         dummy_input = np.random.uniform(0, 255, [128, 599])
@@ -184,3 +235,4 @@ if __name__ == '__main__':
         for layer in neural_net.layers:
             if isinstance(layer, (ConvLayer, FullyConnectedLayer)):
                 layer.update_parameters(0.01)
+    """

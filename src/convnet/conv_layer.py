@@ -109,8 +109,8 @@ class ConvLayer(Layer):
         self.filter_weights -= learning_rate * self.d_filter_weights
         self.biases -= learning_rate * self.d_biases
 
-        print "\nUPDATED filter weights ex:\n", self.filter_weights[0][0]
-        print "\nUPDATED biases ex:\n", self.biases[0]
+        # print "\nUPDATED filter weights ex:\n", self.filter_weights[0][0]
+        # print "\nUPDATED biases ex:\n", self.biases[0]
 
         self.d_filter_weights[...] = 0
         self.d_biases[...] = 0
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
     print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
 
-    dummy_output_grad = np.ones((3,10)) / 2
+    dummy_output_grad = np.ones((3, 10)) / 2
     print "\nOutput gradient:\n", dummy_output_grad
 
     print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)

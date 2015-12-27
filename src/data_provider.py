@@ -90,6 +90,7 @@ class DataProvider(object):
         filename = '../../spectrograms/' + genre + '/' + genre + '.' + id_str + '.png'
         im = imread(filename)
         im_gray = im[:,:,0] * 0.299 + im[:,:,1] * 0.587 + im[:,:,2] * 0.114
+        im_gray /= 255.0
 
         output = np.zeros(self.num_genres)
         if genre == 'classical':

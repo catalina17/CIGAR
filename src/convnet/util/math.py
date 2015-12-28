@@ -31,7 +31,7 @@ def d_relu(x):
 
 def leaky_relu(x):
     res = x
-    res[x <= 0] = 0.01 * x
+    res[x <= 0] *= 0.01
 
     return res
 

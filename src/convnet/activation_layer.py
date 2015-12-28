@@ -9,6 +9,9 @@ class ActivationLayer(Layer):
         if activation_fn == 'ReLU':
             self.activation_fn = math.relu
             self.d_activation_fn = math.d_relu
+        elif activation_fn == 'leakyReLU':
+            self.activation_fn = math.leaky_relu
+            self.d_activation_fn = math.d_leaky_relu
         elif activation_fn == 'sigmoid':
             self.activation_fn = math.sigmoid
             self.d_activation_fn = math.d_sigmoid

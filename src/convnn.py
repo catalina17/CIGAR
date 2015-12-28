@@ -23,6 +23,7 @@ class ConvNN(object):
         """
         self.layers = layers
         self.data_provider = data_provider
+        self.results = None
 
     def _setup_layers(self, cnn_input_shape, cnn_output_shape):
         """
@@ -54,6 +55,9 @@ class ConvNN(object):
         num_iters : int
 
         """
+        self.results = dict(test=np.zeros(num_iters), train=np.zeros(num_iters),
+                            train_loss=np.zeros(num_iters))
+
         # Initialise layers with corresponding input/output dimensions
         self._setup_layers(self.data_provider.get_input_shape(),
                            self.data_provider.get_output_shape())
@@ -88,7 +92,6 @@ class ConvNN(object):
                                                                         training_example['out'])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
-                        # print np.std(current_gradient)
 
                     # Update parameters - online mode
                     for layer in self.layers:
@@ -98,11 +101,11 @@ class ConvNN(object):
                 batch = self.data_provider.get_next_batch()
 
             all_training_data = self.data_provider.get_all_training_data()
-            self.error_and_loss(all_training_data)
+            self.error_and_loss(all_training_data, it)
 
-            self.test()
+            self.test(it)
 
-    def error_and_loss(self, batch):
+    def error_and_loss(self, batch, iter_idx):
         error = 0.0
         loss = 0.0
 
@@ -119,6 +122,9 @@ class ConvNN(object):
 
         print "\nTraining error:\n", error / batch.shape[0]
         print "\nTraining loss:\n", loss
+
+        self.results['train'][iter_idx] = error / batch.shape[0]
+        self.results['train_loss'][iter_idx] = loss
 
     def error(self, batch):
         error = 0.0
@@ -148,7 +154,7 @@ class ConvNN(object):
         loss /= training_batch.shape[0]
         return loss
 
-    def test(self):
+    def test(self, iter_idx):
         test_data = self.data_provider.get_test_data()
         test_error = 0.0
 
@@ -159,6 +165,8 @@ class ConvNN(object):
                 test_error += 1.0
 
         print "Test error:", test_error / test_data.shape[0]
+
+        self.results['test'][iter_idx] = test_error / test_data.shape[0]
 
     def predict(self, input):
         """
@@ -184,21 +192,21 @@ class ConvNN(object):
 
 if __name__ == '__main__':
     neural_net = ConvNN([ConvLayer(64, (128, 4), 0, 0.044, False),
-                         ActivationLayer('ReLU'),
+                         ActivationLayer('leakyReLU'),
                          MaxPoolingLayer((1, 4)),
 
                          ConvLayer(64, (64, 4), 0, 0.0625, False),
-                         ActivationLayer('ReLU'),
+                         ActivationLayer('leakyReLU'),
                          MaxPoolingLayer((1, 2)),
 
                          ConvLayer(64, (64, 4), 0, 0.0625, False),
-                         ActivationLayer('ReLU'),
+                         ActivationLayer('leakyReLU'),
                          GlobalPoolingLayer(),
 
                          FullyConnectedLayer(64, weight_decay=0, weight_scale=0.072),
-                         ActivationLayer('ReLU'),
+                         ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(32, weight_decay=0, weight_scale=0.125),
-                         ActivationLayer('ReLU'),
+                         ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(2, weight_decay=0, weight_scale=0.1),
                          SoftmaxLayer()],
                         DataProvider(4))
@@ -206,6 +214,12 @@ if __name__ == '__main__':
     neural_net._setup_layers((128, 599), (2, ))
 
     time1 = time.time()
-    neural_net.train(learning_rate=0.01, num_iters=20)
+    neural_net.train(learning_rate=0.01, num_iters=40)
     time2 = time.time()
     print('Time taken: %.1fs' % (time2 - time1))
+
+    print "\nRESULTS:\n"
+    for result in neural_net.results:
+        print result
+        for val in neural_net.results[result]:
+            print val

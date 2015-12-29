@@ -56,7 +56,7 @@ class ConvNN(object):
 
         """
         self.results = dict(test=np.zeros(num_iters), train=np.zeros(num_iters),
-                            train_loss=np.zeros(num_iters))
+                            train_loss=np.zeros(num_iters), test_loss=np.zeros(num_iters))
 
         # Initialise layers with corresponding input/output dimensions
         self._setup_layers(self.data_provider.get_input_shape(),
@@ -121,10 +121,10 @@ class ConvNN(object):
             loss += self.layers[-1].loss(current_input, training_example['out'])
 
         print "\nTraining error:\n", error / batch.shape[0]
-        print "\nTraining loss:\n", loss
+        print "\nTraining loss:\n", loss / batch.shape[0]
 
         self.results['train'][iter_idx] = error / batch.shape[0]
-        self.results['train_loss'][iter_idx] = loss
+        self.results['train_loss'][iter_idx] = loss / batch.shape[0]
 
     def error(self, batch):
         error = 0.0
@@ -157,16 +157,21 @@ class ConvNN(object):
     def test(self, iter_idx):
         test_data = self.data_provider.get_test_data()
         test_error = 0.0
+        test_loss = 0.0
 
         for test_example in test_data:
-            output_class = self.predict(test_example['spec'])
+            output = self.predict(test_example['spec'])
             print "Actual ", str(np.argmax(test_example['out']))
-            if output_class != np.argmax(test_example['out']):
+
+            test_loss += -np.sum(test_example['out'] * np.log(output / np.sum(output)))
+            if np.argmax(output) != np.argmax(test_example['out']):
                 test_error += 1.0
 
         print "Test error:", test_error / test_data.shape[0]
+        print "Test loss:", test_loss / test_data.shape[0]
 
         self.results['test'][iter_idx] = test_error / test_data.shape[0]
+        self.results['test_loss'][iter_idx] = test_loss / test_data.shape[0]
 
     def predict(self, input):
         """
@@ -188,7 +193,7 @@ class ConvNN(object):
         # Compute predicted output
         print "Predicted ", current_input
         predicted_class = np.argmax(current_input)
-        return predicted_class
+        return current_input
 
 if __name__ == '__main__':
     neural_net = ConvNN([ConvLayer(64, (128, 4), 0, 0.044, False),

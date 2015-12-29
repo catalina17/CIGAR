@@ -43,6 +43,13 @@ class DataProvider(object):
 
             np.random.shuffle(self.dataset[igenre])
 
+        print "Test set - CLASSICAL:"
+        for ex in self.dataset[0, self.genre_dataset_size * 8 / 10:]:
+            print ex['id']
+        print "Test set - METAL:"
+        for ex in self.dataset[1, self.genre_dataset_size * 8 / 10:]:
+            print ex['id']
+
     def get_next_batch(self):
         if self.current_batch_start_index < self.genre_dataset_size * 8 / 10:
             batch = np.empty(self.batch_size, dtype=dict)
@@ -89,7 +96,7 @@ class DataProvider(object):
             id_str = '0' + id_str
         filename = '../../spectrograms/' + genre + '/' + genre + '.' + id_str + '.png'
         im = imread(filename)
-        im_gray = im[:,:,0] * 0.299 + im[:,:,1] * 0.587 + im[:,:,2] * 0.114
+        im_gray = im[:, :, 0] * 0.299 + im[:, :, 1] * 0.587 + im[:, :, 2] * 0.114
         im_gray /= 255.0
 
         output = np.zeros(self.num_genres)
@@ -98,7 +105,7 @@ class DataProvider(object):
         else:
             output[1] = 1
 
-        return dict(spec=im_gray, out=output)
+        return dict(spec=im_gray, out=output, id=id)
 
 if __name__ == '__main__':
     data_provider = DataProvider(10)

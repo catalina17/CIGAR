@@ -46,13 +46,14 @@ class ConvNN(object):
 
         # print "ConvNN setup successful!"
 
-    def train(self, learning_rate, num_iters):
+    def train(self, learning_rate, num_iters, lrate_schedule=False):
         """
 
         Parameters
         ----------
         learning_rate : float
         num_iters : int
+        lrate_schedule : bool
 
         """
         self.results = dict(test=np.zeros(num_iters), train=np.zeros(num_iters),
@@ -96,7 +97,11 @@ class ConvNN(object):
                     # Update parameters - online mode
                     for layer in self.layers:
                         if type(layer) in [ConvLayer, FullyConnectedLayer]:
-                            layer.update_parameters(learning_rate)
+                            if lrate_schedule:
+                                layer.update_parameters(learning_rate * (num_iters - it + 1.0) /
+                                                        num_iters)
+                            else:
+                                layer.update_parameters(learning_rate)
 
                 batch = self.data_provider.get_next_batch()
 
@@ -219,7 +224,7 @@ if __name__ == '__main__':
     neural_net._setup_layers((128, 599), (2, ))
 
     time1 = time.time()
-    neural_net.train(learning_rate=0.01, num_iters=40)
+    neural_net.train(learning_rate=0.005, num_iters=40, lrate_schedule=True)
     time2 = time.time()
     print('Time taken: %.1fs' % (time2 - time1))
 

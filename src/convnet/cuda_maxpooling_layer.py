@@ -100,7 +100,32 @@ class CUDAMaxPoolingLayer(MaxPoolingLayer):
             return output
 
     def back_prop(self, output_grad):
-        raise NotImplementedError()
+        input_grad = np.zeros(self.input_shape).astype(np.float32)
+
+        mod = SourceModule("""
+            #define OUTGRAD_HEIGHT """ + str(output_grad.shape[0]) + """
+            #define OUTGRAD_WIDTH """ + str(output_grad.shape[1]) + """
+            #define INGRAD_WIDTH """ + str(input_grad.shape[1]) + """
+
+            __global__ void max_pool_back(float *outgrad, float *ingrad, int *max_idx_w) {
+                int col = blockIdx.x * blockDim.x + threadIdx.x;
+                int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+                if (col >= OUTGRAD_WIDTH || row >= OUTGRAD_HEIGHT)
+                    return;
+
+                int idx_out = col + row * OUTGRAD_WIDTH;
+                ingrad[max_idx_w[idx_out] + row * INGRAD_WIDTH] = outgrad[idx_out];
+            }
+            """)
+
+        max_pool_back = mod.get_function('max_pool_back')
+        max_pool_back(driver.In(output_grad.astype(np.float32)), driver.InOut(input_grad),
+                      driver.In(self.max_activation_indices),
+                      block=(8, 4, 1),
+                      grid=(output_grad.shape[1] / 8, output_grad.shape[0] / 4, 1))
+
+        return input_grad
 
     def set_input_shape(self, shape):
         super(CUDAMaxPoolingLayer, self).set_input_shape(shape)
@@ -115,5 +140,11 @@ if __name__ == '__main__':
 
     start = time.time()
     layer.forward_prop(input)
+    finish = time.time()
+    print "Time taken: %f s", finish - start
+
+    output_grad = np.random.randn(64, 149)
+    start = time.time()
+    layer.back_prop(output_grad)
     finish = time.time()
     print "Time taken: %f s", finish - start

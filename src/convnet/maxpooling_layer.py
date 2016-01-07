@@ -1,5 +1,6 @@
 from layer import Layer
 import numpy as np
+import time
 
 
 class MaxPoolingLayer(Layer):
@@ -105,15 +106,21 @@ class MaxPoolingLayer(Layer):
         return shape
 
 if __name__ == "__main__":
-    dummy_input = np.random.randn(4, 4)
+    dummy_input = np.random.randn(64, 596)
     print "Input:\n", dummy_input
 
-    layer = MaxPoolingLayer(filter_shape=(2,2))
+    layer = MaxPoolingLayer(filter_shape=(1, 4))
     layer.set_input_shape(dummy_input.shape)
 
+    start = time.time()
     print "Forward propagation:\n", layer.forward_prop(dummy_input)
+    finish = time.time()
+    print "Time taken: %f s", finish - start
 
-    dummy_output_grad = np.ones((2, 2))
+    dummy_output_grad = np.ones((64, 149))
     print "Output gradient:\n", dummy_output_grad
 
+    start = time.time()
     print "Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Time taken: %f s", finish - start

@@ -114,13 +114,10 @@ if __name__ == "__main__":
 
     start = time.time()
     print "Forward propagation:\n", layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Time taken: %f s", finish - start
 
     dummy_output_grad = np.ones((64, 149))
     print "Output gradient:\n", dummy_output_grad
 
-    start = time.time()
     print "Backpropagation:\n", layer.back_prop(dummy_output_grad)
     finish = time.time()
     print "Time taken: %f s", finish - start

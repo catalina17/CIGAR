@@ -10,6 +10,12 @@ import time
 class CUDAMaxPoolingLayer(MaxPoolingLayer):
 
     def __init__(self, filter_shape):
+        mod = SourceModule("""
+        __global__ void multiply_them(float *dest, float *a, float *b) {
+            const int i = threadIdx.x;
+            dest[i] = a[i] * b[i];
+        }
+        """)
         super(CUDAMaxPoolingLayer, self).__init__(filter_shape)
 
     def forward_prop(self, input):
@@ -37,27 +43,29 @@ class CUDAMaxPoolingLayer(MaxPoolingLayer):
                         return;
 
                     int idx = col + row * INPUT_WIDTH;
-                    int start = col * 4;
+                    int start = col << 2;
 
-                    float max_val = in[idx].x;
-                    max_idx_w[idx] = start;
+                    float4 val = in[idx];
+                    float max_val = val.x;
+                    int max_idx = start;
 
-                    if (max_val < in[idx].y) {
-                        max_val = in[idx].y;
-                        max_idx_w[idx] = start + 1;
+                    if (max_val < val.y) {
+                        max_val = val.y;
+                        max_idx = start + 1;
                     }
 
-                    if (max_val < in[idx].z) {
-                        max_val = in[idx].z;
-                        max_idx_w[idx] = start + 2;
+                    if (max_val < val.z) {
+                        max_val = val.z;
+                        max_idx = start + 2;
                     }
 
-                    if (max_val < in[idx].w) {
-                        max_val = in[idx].w;
-                        max_idx_w[idx] = start + 3;
+                    if (max_val < val.w) {
+                        max_val = val.w;
+                        max_idx = start + 3;
                     }
 
                     dest[idx] = max_val;
+                    max_idx_w[idx] = max_idx;
                 }
                 """)
         elif self.filter_shape[1] == 2:
@@ -73,7 +81,7 @@ class CUDAMaxPoolingLayer(MaxPoolingLayer):
                         return;
 
                     int idx = col + row * INPUT_WIDTH;
-                    int start = col * 2;
+                    int start = col << 1;
 
                     float max_val = in[idx].x;
                     max_idx_w[idx] = start;
@@ -140,11 +148,8 @@ if __name__ == '__main__':
 
     start = time.time()
     layer.forward_prop(input)
-    finish = time.time()
-    print "Time taken: %f s", finish - start
 
     output_grad = np.random.randn(64, 149)
-    start = time.time()
     layer.back_prop(output_grad)
     finish = time.time()
-    print "Time taken: %f s", finish - start
+    print "Time taken: ", finish - start

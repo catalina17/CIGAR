@@ -49,3 +49,13 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
         return output
 
     def back_prop(self, output_grad):
+        raise NotImplementedError()
+
+    def set_input_shape(self, shape):
+        super(FullyConnectedLayerCUDA, self).set_input_shape(shape)
+
+    def get_output_shape(self):
+        return super(FullyConnectedLayerCUDA, self).get_output_shape()
+
+    def update_parameters(self, learning_rate):
+        raise NotImplementedError()

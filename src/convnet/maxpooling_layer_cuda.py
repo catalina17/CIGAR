@@ -7,7 +7,7 @@ import numpy as np
 import time
 
 
-class CUDAMaxPoolingLayer(MaxPoolingLayer):
+class MaxPoolingLayerCUDA(MaxPoolingLayer):
 
     def __init__(self, filter_shape):
         mod = SourceModule("""
@@ -16,7 +16,7 @@ class CUDAMaxPoolingLayer(MaxPoolingLayer):
             dest[i] = a[i] * b[i];
         }
         """)
-        super(CUDAMaxPoolingLayer, self).__init__(filter_shape)
+        super(MaxPoolingLayerCUDA, self).__init__(filter_shape)
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
@@ -136,13 +136,13 @@ class CUDAMaxPoolingLayer(MaxPoolingLayer):
         return input_grad
 
     def set_input_shape(self, shape):
-        super(CUDAMaxPoolingLayer, self).set_input_shape(shape)
+        super(MaxPoolingLayerCUDA, self).set_input_shape(shape)
 
     def get_output_shape(self):
-        return super(CUDAMaxPoolingLayer, self).get_output_shape()
+        return super(MaxPoolingLayerCUDA, self).get_output_shape()
 
 if __name__ == '__main__':
-    layer = CUDAMaxPoolingLayer(filter_shape=(1, 4))
+    layer = MaxPoolingLayerCUDA(filter_shape=(1, 4))
     input = np.random.randn(64, 596)
     layer.set_input_shape((64, 596))
 

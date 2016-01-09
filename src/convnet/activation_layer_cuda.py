@@ -7,7 +7,7 @@ import numpy as np
 import time
 
 
-class CUDAActivationLayer(ActivationLayer):
+class ActivationLayerCUDA(ActivationLayer):
 
     def __init__(self, activation_fn):
         mod = SourceModule("""
@@ -16,7 +16,7 @@ class CUDAActivationLayer(ActivationLayer):
                 dest[i] = a[i] * b[i];
             }
             """)
-        super(CUDAActivationLayer, self).__init__(activation_fn)
+        super(ActivationLayerCUDA, self).__init__(activation_fn)
 
     def forward_prop(self, input):
         assert self.input_shape == input.shape, "Input does not have correct shape"
@@ -93,16 +93,16 @@ class CUDAActivationLayer(ActivationLayer):
         return input_grad
 
     def set_input_shape(self, shape):
-        super(CUDAActivationLayer, self).set_input_shape(shape)
+        super(ActivationLayerCUDA, self).set_input_shape(shape)
 
     def get_output_shape(self):
-        return super(CUDAActivationLayer, self).get_output_shape()
+        return super(ActivationLayerCUDA, self).get_output_shape()
 
 if __name__ == '__main__':
     dummy_input = np.random.randn(64, 596)
     print "Input:\n", dummy_input
 
-    layer = CUDAActivationLayer('leakyReLU')
+    layer = ActivationLayerCUDA('leakyReLU')
     layer.set_input_shape((64, 596))
 
     start = time.time()

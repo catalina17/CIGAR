@@ -1,6 +1,7 @@
 from layer import Layer
 from util import math
 import numpy as np
+import time
 
 
 class ActivationLayer(Layer):
@@ -40,15 +41,21 @@ class ActivationLayer(Layer):
         return self.input_shape
 
 if __name__ == '__main__':
-    dummy_input = np.random.randn(4, 4)
+    dummy_input = np.random.randn(64, 596)
     print "Input:\n", dummy_input
 
-    layer = ActivationLayer('ReLU')
-    layer.set_input_shape((4, 4))
+    layer = ActivationLayer('leakyReLU')
+    layer.set_input_shape((64, 596))
 
+    start = time.time()
     print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
+    finish = time.time()
+    print "Time taken: ", finish - start
 
-    dummy_output_grad = np.ones((4, 4))
+    dummy_output_grad = np.ones((64, 596))
     print "Output gradient:\n", dummy_output_grad
 
+    start = time.time()
     print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Time taken: ", finish - start

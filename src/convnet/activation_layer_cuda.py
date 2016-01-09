@@ -49,9 +49,9 @@ class ActivationLayerCUDA(ActivationLayer):
             """)
 
         fwd_leakyrelu = mod.get_function('fwd_leakyrelu')
-        output = np.empty(self.input_shape)
+        output = np.empty(self.input_shape).astype(np.float32)
         fwd_leakyrelu(driver.In(input.astype(np.float32)),
-                      driver.Out(output.astype(np.float32)),
+                      driver.Out(output),
                       block=(8, 4, 1), grid=(w / 8 + 1, h / 4 + 1, 1))
 
         return output
@@ -84,9 +84,9 @@ class ActivationLayerCUDA(ActivationLayer):
             """)
 
         backprop_leakyrelu = mod.get_function('backprop_leakyrelu')
-        input_grad = np.empty(self.input_shape)
+        input_grad = np.empty(self.input_shape).astype(np.float32)
         backprop_leakyrelu(driver.In(output_grad.astype(np.float32)),
-                           driver.Out(input_grad.astype(np.float32)),
+                           driver.Out(input_grad),
                            driver.In(self.current_input.astype(np.float32)),
                            block=(8, 4, 1), grid=(w / 8 + 1, h / 4 + 1, 1))
 
@@ -99,18 +99,18 @@ class ActivationLayerCUDA(ActivationLayer):
         return super(ActivationLayerCUDA, self).get_output_shape()
 
 if __name__ == '__main__':
-    dummy_input = np.random.randn(64, 596)
+    dummy_input = np.random.randn(8, 8)
     print "Input:\n", dummy_input
 
     layer = ActivationLayerCUDA('leakyReLU')
-    layer.set_input_shape((64, 596))
+    layer.set_input_shape((8, 8))
 
     start = time.time()
     print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
     finish = time.time()
     print "Fwd prop - Time taken: ", finish - start
 
-    dummy_output_grad = np.ones((64, 596))
+    dummy_output_grad = np.ones((8, 8))
     print "Output gradient:\n", dummy_output_grad
 
     start = time.time()

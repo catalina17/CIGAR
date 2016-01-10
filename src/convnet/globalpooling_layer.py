@@ -1,5 +1,6 @@
 from layer import Layer
 import numpy as np
+import time
 
 
 class GlobalPoolingLayer(Layer):
@@ -69,16 +70,23 @@ class GlobalPoolingLayer(Layer):
         return shape
 
 if __name__ == '__main__':
-    dummy_input = np.ones((2, 4))
-    dummy_input.T[2] = 2 * np.ones((2,))
-    print "Input:\n", dummy_input
+    dummy_input = np.ones((64, 70))
+    # print "Input:\n", dummy_input
 
     layer = GlobalPoolingLayer()
     layer.set_input_shape(dummy_input.shape)
 
-    print "Forward propagation:\n", layer.forward_prop(dummy_input)
+    start = time.time()
+    # print "Forward propagation:\n",
+    layer.forward_prop(dummy_input)
+    finish = time.time()
+    print "Fwd prop - time taken: ", finish - start
 
-    dummy_output_grad = np.ones((12,))
-    print "Output gradient:\n", dummy_output_grad
+    dummy_output_grad = np.ones((210,))
+    # print "Output gradient:\n", dummy_output_grad
 
-    print "Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    start = time.time()
+    # print "Backpropagation:\n",
+    layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Back prop - time taken: ", finish - start

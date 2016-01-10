@@ -1,5 +1,6 @@
 from layer import Layer
 import numpy as np
+import time
 
 
 class FullyConnectedLayer(Layer):
@@ -15,8 +16,8 @@ class FullyConnectedLayer(Layer):
 
         """
         self.num_nodes = num_nodes
-        self.biases = np.zeros(num_nodes)
-        self.d_biases = np.zeros(num_nodes)
+        self.biases = np.zeros(num_nodes).astype(np.float32)
+        self.d_biases = np.zeros(num_nodes).astype(np.float32)
 
         self.weight_decay = weight_decay
         self.weight_scale = weight_scale
@@ -36,10 +37,7 @@ class FullyConnectedLayer(Layer):
         self.d_weights += np.dot(np.resize(self.current_input, (self.input_shape[0], 1)),
                                  np.resize(output_grad, (output_grad.shape[0], 1)).T) +\
                           self.weight_decay * self.weights
-        # print "Weights derivative ex:\n", self.d_weights[0][0]
-
         self.d_biases += output_grad
-        # print "Biases derivative ex:\n", self.d_biases[0]
 
         return np.dot(output_grad, self.weights.T)
 
@@ -53,8 +51,8 @@ class FullyConnectedLayer(Layer):
         """
         self.input_shape = shape
         self.weights = np.random.normal(loc=0, scale=self.weight_scale,
-                                        size=(shape[0], self.num_nodes))
-        self.d_weights = np.zeros(self.weights.shape)
+                                        size=(shape[0], self.num_nodes)).astype(np.float32)
+        self.d_weights = np.zeros(self.weights.shape).astype(np.float32)
 
         # print "FullyConnectedLayer with input shape " + str(shape)
 
@@ -85,19 +83,30 @@ class FullyConnectedLayer(Layer):
         self.d_biases[...] = 0
 
 if __name__ == "__main__":
-    dummy_input = np.ones((4,))
-    print "Input:\n", dummy_input
+    dummy_input = np.ones((192,))
+    # print "Input:\n", dummy_input
 
-    layer = FullyConnectedLayer(5, weight_decay=0.1, weight_scale=0.01)
-    layer.set_input_shape((4,))
+    layer = FullyConnectedLayer(64, weight_decay=0.1, weight_scale=0.01)
+    layer.set_input_shape((192,))
 
-    print "\n--->> Forward propagation:\n", sum(layer.weights), "\n", layer.forward_prop(dummy_input)
+    start = time.time()
+    # print "\n--->> Forward propagation:\n", sum(layer.weights), "\n",
+    layer.forward_prop(dummy_input)
+    finish = time.time()
+    print "Fwd prop - Time taken: ", finish - start
 
-    dummy_output_grad = np.random.randn(5)
-    print "\nOutput gradient:\n", dummy_output_grad
+    dummy_output_grad = np.random.randn(64)
+    # print "\nOutput gradient:\n", dummy_output_grad
 
-    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    start = time.time()
+    # print "\n--->> Backpropagation:\n",
+    layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Back prop - Time taken: ", finish - start
 
-    print "\n--->> Params before update:\n", layer.weights, "\n", layer.biases
+    start = time.time()
+    # print "\n--->> Params before update:\n", layer.weights, "\n", layer.biases
     layer.update_parameters(0.01)
-    print "\n--->> Params after update:\n", layer.weights, "\n", layer.biases
+    # print "\n--->> Params after update:\n", layer.weights, "\n", layer.biases
+    finish = time.time()
+    print "Param update - Time taken: ", finish - start

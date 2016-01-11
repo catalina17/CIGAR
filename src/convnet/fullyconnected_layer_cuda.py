@@ -24,18 +24,17 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
 
         mod = SourceModule("""
             #define INPUT_LENGTH """ + str(self.input_shape[0]) + """
-            #define OUTPUT_LENGTH """ + str(self.num_nodes) + """
 
             __global__ void fwd_prop(float *in, float *weights, float *biases, float *out) {
                 __shared__ float temp[INPUT_LENGTH];
                 temp[threadIdx.x] = in[threadIdx.x] *
-                                    weights[OUTPUT_LENGTH * threadIdx.x + blockIdx.x];
+                                    weights[gridDim.x * threadIdx.x + blockIdx.x];
 
                 __syncthreads();
                 if (threadIdx.x)
                     return;
 
-                for (int i = 0; i < INPUT_LENGTH; ++i)
+                for (int i = 0; i < blockDim.x; ++i)
                     out[blockIdx.x] += temp[i];
 
                 out[blockIdx.x] += biases[blockIdx.x];
@@ -54,25 +53,24 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
         # No weight decay
 
         mod = SourceModule("""
-            #define INPUT_LENGTH """ + str(self.input_shape[0]) + """
             #define OUTPUT_LENGTH """ + str(self.num_nodes) + """
 
             __global__ void back_prop(float *out_grad, float *in_grad, float *d_weights,
                                       float *d_biases, float *in, float *weights) {
                 __shared__ float temp[OUTPUT_LENGTH];
                 temp[threadIdx.x] = out_grad[threadIdx.x] *
-                                    weights[INPUT_LENGTH * threadIdx.x + blockIdx.x];
+                                    weights[gridDim.x * threadIdx.x + blockIdx.x];
 
                 if (!blockIdx.x)
                     d_biases[threadIdx.x] += out_grad[threadIdx.x];
 
-                d_weights[OUTPUT_LENGTH * blockIdx.x + threadIdx.x] += in[blockIdx.x] *
-                                                                       out_grad[threadIdx.x];
+                d_weights[blockDim.x * blockIdx.x + threadIdx.x] += in[blockIdx.x] *
+                                                                    out_grad[threadIdx.x];
 
                 __syncthreads();
                 if (threadIdx.x)
                     return;
-                for (int i = 0; i < OUTPUT_LENGTH; ++i)
+                for (int i = 0; i < blockDim.x; ++i)
                     in_grad[blockIdx.x] += temp[i];
             }
             """)
@@ -97,8 +95,6 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
     def update_parameters(self, learning_rate):
         mod = SourceModule("""
             #define L_RATE """ + str(learning_rate) + """
-            #define INPUT_LENGTH """ + str(self.input_shape[0]) + """
-            #define OUTPUT_LENGTH """ + str(self.num_nodes) + """
 
             __global__ void param_update(float *d_weights, float *d_biases, float *weights,
                                          float *biases) {
@@ -107,7 +103,7 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
                     d_biases[threadIdx.x] = 0.0;
                 }
 
-                int idx = blockIdx.x * OUTPUT_LENGTH + threadIdx.x;
+                int idx = blockIdx.x * blockDim.x + threadIdx.x;
                 weights[idx] -= L_RATE * d_weights[idx];
                 d_weights[idx] = 0.0;
             }

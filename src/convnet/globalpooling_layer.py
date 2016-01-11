@@ -36,7 +36,7 @@ class GlobalPoolingLayer(Layer):
         range_f = self.input_shape[0]
         for f in range(range_f):
             # Average grad
-            input_grad[f] = mean_output_grad[f] / self.input_shape[0]
+            input_grad[f] = mean_output_grad[f] / self.input_shape[1]
             # Max grad
             input_grad[f, self.max_activation_indices[f]] += max_output_grad[f]
             # L2-norm grad

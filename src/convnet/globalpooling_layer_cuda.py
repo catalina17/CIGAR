@@ -16,6 +16,7 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
                 dest[i] = a[i] * b[i];
             }
             """)
+        self.l2_values = None
         super(GlobalPoolingLayerCUDA, self).__init__()
 
     def forward_prop(self, input):
@@ -23,12 +24,13 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
         self.current_input = input
 
         output = np.empty(self.get_output_shape()).astype(np.float32)
-        self.max_activation_indices = np.empty(self.input_shape).astype(np.float32)
+        self.max_activation_indices = np.empty(self.input_shape).astype(np.int32)
+        self.l2_values = np.empty(self.input_shape[0]).astype(np.float32)
 
         mod = SourceModule("""
             const int INPUT_LENGTH = """ + str(self.input_shape[1]) + """;
 
-            __global__ void global_pool(float *in, float *out, float *max_idx) {
+            __global__ void global_pool(float *in, float *out, int *max_idx, float *l2) {
                 __shared__ float temp[INPUT_LENGTH];
                 temp[threadIdx.x] = in[threadIdx.x];
 
@@ -51,20 +53,47 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
                 }
 
                 out[blockIdx.x] = sum / (float)blockDim.x;
+
                 out[blockIdx.x + gridDim.x] = max_val;
                 max_idx[blockIdx.x] = i_max;
-                out[blockIdx.x + (gridDim.x << 1)] = sqrt(sum_sqr);
+
+                l2[blockIdx.x] = sqrt(sum_sqr);
+                out[blockIdx.x + (gridDim.x << 1)] = l2[blockIdx.x];
             }
             """)
         global_pool = mod.get_function('global_pool')
         global_pool(driver.In(input.astype(np.float32)),
                     driver.InOut(output), driver.InOut(self.max_activation_indices),
+                    driver.InOut(self.l2_values),
                     block=(self.input_shape[1], 1, 1), grid=(self.input_shape[0], 1, 1))
 
         return output
 
     def back_prop(self, output_grad):
-        raise NotImplementedError()
+        input_grad = np.empty(self.input_shape).astype(np.float32)
+
+        mod = SourceModule("""
+            __global__ void back_prop(float *out_grad, float *in, float *l2, int *max_idx,
+                                      float *in_grad) {
+                in_grad[blockIdx.x * blockDim.x + threadIdx.x] = out_grad[blockIdx.x] / blockDim.x;
+
+                if (!threadIdx.x)
+                    in_grad[blockIdx.x * blockDim.x + max_idx[blockIdx.x]] +=
+                        out_grad[blockIdx.x + gridDim.x];
+
+                if (l2[blockIdx.x] >= 1e-5)
+                    in_grad[blockIdx.x * blockDim.x + threadIdx.x] +=
+                        in[blockIdx.x * blockDim.x + threadIdx.x] / l2[blockIdx.x] *
+                            out_grad[blockIdx.x + (gridDim.x << 1)];
+            }
+            """)
+        back_prop = mod.get_function('back_prop')
+        back_prop(driver.In(output_grad.astype(np.float32)),
+                  driver.In(self.current_input.astype(np.float32)), driver.In(self.l2_values),
+                  driver.In(self.max_activation_indices), driver.InOut(input_grad),
+                  block=(self.input_shape[1], 1, 1), grid=(self.input_shape[0], 1, 1))
+
+        return input_grad
 
     def set_input_shape(self, shape):
         super(GlobalPoolingLayerCUDA, self).set_input_shape(shape)
@@ -84,3 +113,12 @@ if __name__ == '__main__':
     layer.forward_prop(dummy_input)
     finish = time.time()
     print "Fwd prop - time taken: ", finish - start
+
+    dummy_output_grad = np.ones((210,))
+    # print "Output gradient:\n", dummy_output_grad
+
+    start = time.time()
+    # print "Backpropagation:\n",
+    layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Back prop - time taken: ", finish - start

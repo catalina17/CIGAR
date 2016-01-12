@@ -1,5 +1,6 @@
 from layer import Layer
 import numpy as np
+import time
 
 
 class ConvLayer(Layer):
@@ -22,11 +23,12 @@ class ConvLayer(Layer):
 
         self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
         for i in range(num_filters):
-            self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale, size=filter_shape)
-        self.d_filter_weights = np.zeros(self.filter_weights.shape)
+            self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale,
+                                                      size=filter_shape).astype(np.float32)
+        self.d_filter_weights = np.zeros(self.filter_weights.shape).astype(np.float32)
 
-        self.biases = np.zeros(num_filters)
-        self.d_biases = np.zeros(num_filters)
+        self.biases = np.zeros(num_filters).astype(np.float32)
+        self.d_biases = np.zeros(num_filters).astype(np.float32)
 
         self.weight_decay = weight_decay
 
@@ -76,9 +78,6 @@ class ConvLayer(Layer):
 
         self.d_biases += np.sum(output_grad, axis=1)
 
-        # print "Filter weights derivative ex:\n", self.d_filter_weights[0][0]
-        # print "Biases derivative ex:\n", self.d_biases[0]
-
         return padded_input_grad[:, filter_w - 1:range_w]
 
     def set_input_shape(self, shape):
@@ -113,20 +112,28 @@ class ConvLayer(Layer):
         self.d_biases[...] = 0
 
 if __name__ == "__main__":
-    dummy_input = np.ones((4, 8))
-    print "Input:\n", dummy_input
+    dummy_input = np.ones((128, 599))
+    # print "Input:\n", dummy_input
 
-    layer = ConvLayer(num_filters=3, filter_shape=(4, 3), weight_decay=0.1, weight_scale=0.01,
-                      padding_mode=True)
-    layer.set_input_shape((4, 8))
+    layer = ConvLayer(num_filters=64, filter_shape=(128, 4), weight_decay=0, weight_scale=0.01,
+                      padding_mode=False)
+    layer.set_input_shape((128, 599))
 
-    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
+    start = time.time()
+    # print "\n--->> Forward propagation:\n",
+    layer.forward_prop(dummy_input)
+    finish = time.time()
+    print "Fwd prop - time taken: ", finish - start
 
-    dummy_output_grad = np.ones((3, 10)) / 2
-    print "\nOutput gradient:\n", dummy_output_grad
+    dummy_output_grad = np.ones((64, 596)) / 2
+    # print "\nOutput gradient:\n", dummy_output_grad
 
-    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    # print "\n--->> Backpropagation:\n",
+    layer.back_prop(dummy_output_grad)
 
-    print "\n--->> Params before update:\n", layer.filter_weights, "\n", layer.biases
+    start = time.time()
+    # print "\n--->> Params before update:\n", layer.filter_weights, "\n", layer.biases
     layer.update_parameters(0.01)
-    print "\n--->> Params after update:\n", layer.filter_weights, "\n", layer.biases
+    # print "\n--->> Params after update:\n", layer.filter_weights, "\n", layer.biases
+    finish = time.time()
+    print "Param update - time taken: ", finish - start

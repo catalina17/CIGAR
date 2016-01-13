@@ -59,7 +59,25 @@ class ConvLayerCUDA(ConvLayer):
         return output
 
     def back_prop(self, output_grad):
-        raise NotImplementedError()
+        padded_input_grad = np.zeros((self.input_shape[0],
+                                      self.input_shape[1] + self.num_padding_zeros)).\
+            astype(np.float32)
+
+        range_w = self.get_output_shape()[1]
+        filter_w = self.filter_shape[1]
+
+        mod = SourceModule("""
+            """)
+        conv_back_prop = mod.get_function('conv_back_prop')
+        conv_back_prop(driver.In(output_grad.astype(np.float32)),
+                       driver.In(self.current_padded_input),
+                       driver.In(self.filter_weights),
+                       driver.InOut(padded_input_grad),
+                       driver.InOut(self.d_filter_weights), driver.InOut(self.d_biases),
+                       block=(self.filter_shape[1], self.num_filters, 1),
+                       grid=(padded_input_grad.shape[1], padded_input_grad.shape[0], 1))
+
+        return padded_input_grad[:, filter_w - 1:range_w]
 
     def set_input_shape(self, shape):
         super(ConvLayerCUDA, self).set_input_shape(shape)

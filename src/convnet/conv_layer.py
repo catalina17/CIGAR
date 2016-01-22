@@ -131,7 +131,10 @@ if __name__ == "__main__":
     # print "\nOutput gradient:\n", dummy_output_grad
 
     # print "\n--->> Backpropagation:\n",
+    start = time.time()
     layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Back prop - time taken: ", finish - start
 
     start = time.time()
     # print "\n--->> Params before update:\n", layer.filter_weights, "\n", layer.biases

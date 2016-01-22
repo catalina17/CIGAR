@@ -63,9 +63,7 @@ class ConvLayerCUDA(ConvLayer):
                                       self.input_shape[1] + self.num_padding_zeros)).\
             astype(np.float32)
 
-        mod = SourceModule("""
-            #include <stdio.h>
-
+        mod1 = SourceModule("""
             #define FILTER_HEIGHT """ + str(self.filter_shape[0]) + """
             #define FILTER_WIDTH """ + str(self.filter_shape[1]) + """
             #define NUM_FILTERS """ + str(self.num_filters) + """
@@ -73,44 +71,37 @@ class ConvLayerCUDA(ConvLayer):
 
             __global__ void compute_in_grad(float *out_grad, float *in, float *f_weights,
                                             float *in_grad) {
-                __shared__ float temp[FILTER_WIDTH][NUM_FILTERS];
+                __shared__ float temp[FILTER_WIDTH * NUM_FILTERS];
 
-                temp[threadIdx.x][threadIdx.y] = 0.0;
+                int out_idx = OUT_WIDTH * threadIdx.y + blockIdx.x - threadIdx.x;
+                int f_weights_idx = threadIdx.y * FILTER_WIDTH * FILTER_HEIGHT + threadIdx.x;
+
+                int idx = threadIdx.y * FILTER_WIDTH + threadIdx.x;
+                temp[idx] = 0.0;
                 if (blockIdx.x - threadIdx.x >= 0 && blockIdx.x - threadIdx.x < OUT_WIDTH) {
                     for (int i = 0; i < FILTER_HEIGHT; ++i) {
-                        printf("weight %d, filter %d %f\\n",
-                               i * FILTER_WIDTH + threadIdx.x,
-                               threadIdx.y,
-                               f_weights[threadIdx.y * FILTER_WIDTH * FILTER_HEIGHT +
-                                         i * FILTER_WIDTH + threadIdx.x]);
-                        temp[threadIdx.x][threadIdx.y] +=
-                            out_grad[OUT_WIDTH * threadIdx.y + blockIdx.x - threadIdx.x] *
-                                f_weights[threadIdx.y * FILTER_WIDTH * FILTER_HEIGHT +
-                                          i * FILTER_WIDTH + threadIdx.x];
+                        temp[idx] += out_grad[out_idx] * f_weights[f_weights_idx +
+                                                                   i * FILTER_WIDTH];
                     }
                 }
 
                 __syncthreads();
 
                 float sum = 0.0;
-                for (int i = 0; i < FILTER_WIDTH; ++i)
-                    for (int j = 0; j < NUM_FILTERS; ++j)
-                        sum += temp[i][j];
-
+                for (int i = 0; i < FILTER_WIDTH * NUM_FILTERS; ++i)
+                    sum += temp[i];
                 in_grad[blockIdx.y * gridDim.x + blockIdx.x] = sum;
             }
             """)
-
-        compute_in_grad = mod.get_function('compute_in_grad')
+        compute_in_grad = mod1.get_function('compute_in_grad')
         compute_in_grad(driver.In(output_grad.astype(np.float32)),
                         driver.In(self.current_padded_input),
                         driver.In(self.filter_weights),
-                        # --------------------------------------------
                         driver.InOut(padded_input_grad),
                         block=(self.filter_shape[1], self.num_filters, 1),
                         grid=(padded_input_grad.shape[1], padded_input_grad.shape[0], 1))
 
-        mod = SourceModule("""
+        mod2 = SourceModule("""
             #define OUT_WIDTH """ + str(self.get_output_shape()[1]) + """
             #define IN_WIDTH """ + str(self.input_shape[1]) + """
             #define FILTER_HEIGHT """ + str(self.filter_shape[0]) + """
@@ -120,11 +111,13 @@ class ConvLayerCUDA(ConvLayer):
                                                 float *d_biases) {
                 int idx = FILTER_WIDTH * FILTER_HEIGHT * blockIdx.x + FILTER_WIDTH * threadIdx.y +
                           threadIdx.x;
+                int in_idx = IN_WIDTH * threadIdx.y + threadIdx.x;
+                int out_idx = OUT_WIDTH * blockIdx.x;
                 float d_bias = 0.0;
 
                 for (int i = 0; i < OUT_WIDTH; ++i) {
-                    float val = out_grad[OUT_WIDTH * blockIdx.x + i];
-                    d_f_weights[idx] += val * in[IN_WIDTH * threadIdx.y + i + threadIdx.x];
+                    float val = out_grad[out_idx + i];
+                    d_f_weights[idx] += val * in[in_idx + i];
 
                     if (!threadIdx.x && !threadIdx.y) {
                         d_bias += val;
@@ -136,14 +129,13 @@ class ConvLayerCUDA(ConvLayer):
                 }
             }
             """)
-        compute_derivatives = mod.get_function('compute_derivatives')
+        compute_derivatives = mod2.get_function('compute_derivatives')
         compute_derivatives(driver.In(output_grad.astype(np.float32)),
                             driver.In(self.current_padded_input),
                             driver.InOut(self.d_filter_weights), driver.InOut(self.d_biases),
                             block=(self.filter_shape[1], self.filter_shape[0], 1),
                             grid=(self.num_filters, 1, 1))
 
-        print "\n"
         return padded_input_grad[:, self.num_padding_zeros / 2:self.input_shape[1] +
                                                                self.num_padding_zeros / 2]
 
@@ -193,7 +185,10 @@ if __name__ == '__main__':
     # print "\nOutput gradient:\n", dummy_output_grad
 
     # print "\n--->> Backpropagation:\n",
+    start = time.time()
     layer.back_prop(dummy_output_grad)
+    finish = time.time()
+    print "Back prop - time taken: ", finish - start
 
     start = time.time()
     # print "\n--->> Params before update:\n", layer.filter_weights, "\n", layer.biases

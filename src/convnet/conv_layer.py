@@ -21,7 +21,8 @@ class ConvLayer(Layer):
         self.filter_shape = filter_shape
         print "Filter shape: " + str(filter_shape)
 
-        self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1]))
+        self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1])).\
+            astype(np.float32)
         for i in range(num_filters):
             self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale,
                                                       size=filter_shape).astype(np.float32)
@@ -65,7 +66,7 @@ class ConvLayer(Layer):
         padded_input_grad = np.zeros((self.input_shape[0],
                                       self.input_shape[1] + self.num_padding_zeros))
 
-        range_w = self.input_shape[1] + self.num_padding_zeros - self.filter_shape[1] + 1
+        range_w = self.get_output_shape()[1]
         filter_w = self.filter_shape[1]
         for w in range(range_w):
             for f in range(self.num_filters):
@@ -78,7 +79,8 @@ class ConvLayer(Layer):
 
         self.d_biases += np.sum(output_grad, axis=1)
 
-        return padded_input_grad[:, filter_w - 1:range_w]
+        return padded_input_grad[:, self.num_padding_zeros / 2:self.input_shape[1] +
+                                                               self.num_padding_zeros / 2]
 
     def set_input_shape(self, shape):
         """

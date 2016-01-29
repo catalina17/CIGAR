@@ -146,26 +146,7 @@ class ConvLayerCUDA(ConvLayer):
         return super(ConvLayerCUDA, self).get_output_shape()
 
     def update_parameters(self, learning_rate):
-        mod = SourceModule("""
-            #define L_RATE """ + str(learning_rate) + """
-
-            __global__ void param_update(float *f_weights, float *biases, float *d_f_weights,
-                                         float *d_biases) {
-                if (!threadIdx.x)
-                    biases[blockIdx.x] -= L_RATE * d_biases[blockIdx.x];
-                    d_biases[blockIdx.x] = 0.0;
-
-                int idx = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x +
-                          threadIdx.x;
-                f_weights[idx] -= L_RATE * d_f_weights[idx];
-                d_f_weights[idx] = 0.0;
-            }
-            """)
-        param_update = mod.get_function('param_update')
-        param_update(driver.InOut(self.filter_weights), driver.InOut(self.biases),
-                     driver.InOut(self.d_filter_weights), driver.InOut(self.d_biases),
-                     block=(self.filter_shape[1], self.filter_shape[1], 1),
-                     grid=(self.num_filters, 1, 1))
+        super(ConvLayerCUDA, self).update_parameters(learning_rate)
 
 if __name__ == '__main__':
     dummy_input = np.ones((128, 599))

@@ -1,8 +1,10 @@
 from convnet.activation_layer import ActivationLayer
 from convnet.conv_layer import ConvLayer
+from convnet.conv_layer_cuda import ConvLayerCUDA
 from convnet.globalpooling_layer import GlobalPoolingLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
 from convnet.maxpooling_layer import MaxPoolingLayer
+from convnet.maxpooling_layer_cuda import MaxPoolingLayerCUDA
 from convnet.softmax_layer import SoftmaxLayer
 from data_provider import DataProvider
 
@@ -35,10 +37,11 @@ class ConvNN(object):
 
         """
         current_shape = cnn_input_shape
+        print "OUTPUT shapes:"
         for layer in self.layers:
             layer.set_input_shape(current_shape)
             current_shape = layer.get_output_shape()
-            # print "DONE setting up " + str(type(layer)) + '\n'
+            print layer.__class__.__name__, current_shape
 
         assert current_shape == cnn_output_shape, "Computed output shape " + str(current_shape) +\
                                                   " does not match given output shape " +\
@@ -57,7 +60,8 @@ class ConvNN(object):
 
         """
         self.results = dict(test=np.zeros(num_iters), train=np.zeros(num_iters),
-                            train_loss=np.zeros(num_iters), test_loss=np.zeros(num_iters))
+                            train_loss=np.zeros(num_iters), test_loss=np.zeros(num_iters),
+                            mse=np.zeros(num_iters), test_mse=np.zeros(num_iters))
 
         # Initialise layers with corresponding input/output dimensions
         self._setup_layers(self.data_provider.get_input_shape(),
@@ -86,8 +90,8 @@ class ConvNN(object):
 
                     # Backpropagation phase
                     predicted_output = current_input
-                    print "Predicted output: ", predicted_output,\
-                          "--- True output: ", training_example['out']
+                    # print "Predicted: ", predicted_output,\
+                    #      "--- Actual: ", training_example['out'], "-", str(training_example['id'])
 
                     current_gradient = self.layers[-1].initial_gradient(predicted_output,
                                                                         training_example['out'])
@@ -112,6 +116,7 @@ class ConvNN(object):
 
     def error_and_loss(self, batch, iter_idx):
         error = 0.0
+        mse = 0.0
         loss = 0.0
 
         for training_example in batch:
@@ -119,16 +124,19 @@ class ConvNN(object):
             for layer in self.layers:
                 current_input = layer.forward_prop(current_input)
 
-            print "Predicted output: ", current_input, "--- True output: ", training_example['out']
+            print "Predicted output: ", current_input, "- True output: ", training_example['out']
 
             if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
+                mse += np.sum((current_input - training_example['out']) ** 2)
             loss += self.layers[-1].loss(current_input, training_example['out'])
 
         print "\nTraining error:\n", error / batch.shape[0]
+        print "\nTraining MSE:\n", mse / batch.shape[0]
         print "\nTraining loss:\n", loss / batch.shape[0]
 
         self.results['train'][iter_idx] = error / batch.shape[0]
+        self.results['mse'][iter_idx] = mse / batch.shape[0]
         self.results['train_loss'][iter_idx] = loss / batch.shape[0]
 
     def error(self, batch):
@@ -162,6 +170,7 @@ class ConvNN(object):
     def test(self, iter_idx):
         test_data = self.data_provider.get_test_data()
         test_error = 0.0
+        test_mse = 0.0
         test_loss = 0.0
 
         for test_example in test_data:
@@ -171,11 +180,14 @@ class ConvNN(object):
             test_loss += -np.sum(test_example['out'] * np.log(output / np.sum(output)))
             if np.argmax(output) != np.argmax(test_example['out']):
                 test_error += 1.0
+                test_mse += np.sum((output - test_example['out']) ** 2)
 
         print "Test error:", test_error / test_data.shape[0]
+        print "Test MSE:", test_mse / test_data.shape[0]
         print "Test loss:", test_loss / test_data.shape[0]
 
         self.results['test'][iter_idx] = test_error / test_data.shape[0]
+        self.results['test_mse'][iter_idx] = test_mse / test_data.shape[0]
         self.results['test_loss'][iter_idx] = test_loss / test_data.shape[0]
 
     def predict(self, input):
@@ -197,34 +209,33 @@ class ConvNN(object):
 
         # Compute predicted output
         print "Predicted ", current_input
-        predicted_class = np.argmax(current_input)
         return current_input
 
 if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayer(64, (128, 4), 0, 0.044, False),
+    neural_net = ConvNN([ConvLayerCUDA(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
                          ActivationLayer('leakyReLU'),
-                         MaxPoolingLayer((1, 4)),
+                         MaxPoolingLayerCUDA((1, 4)),
 
-                         ConvLayer(64, (64, 4), 0, 0.0625, False),
+                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
-                         MaxPoolingLayer((1, 2)),
+                         MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayer(64, (64, 4), 0, 0.0625, False),
+                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(64, weight_decay=0, weight_scale=0.072),
+                         FullyConnectedLayer(64, 0, weight_scale=0.072),
                          ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(32, weight_decay=0, weight_scale=0.125),
+                         FullyConnectedLayer(32, 0, weight_scale=0.125),
                          ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(2, weight_decay=0, weight_scale=0.1),
+                         FullyConnectedLayer(4, 0, weight_scale=0.1),
                          SoftmaxLayer()],
-                        DataProvider(4))
+                        DataProvider(8, batch_mode=False))
 
-    neural_net._setup_layers((128, 599), (2, ))
+    neural_net._setup_layers((128, 599), (4, ))
 
     time1 = time.time()
-    neural_net.train(learning_rate=0.005, num_iters=40, lrate_schedule=True)
+    neural_net.train(learning_rate=0.01, num_iters=100, lrate_schedule=True)
     time2 = time.time()
     print('Time taken: %.1fs' % (time2 - time1))
 

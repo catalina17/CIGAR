@@ -69,7 +69,7 @@ class ConvNN(object):
             # If available, use the next batch of training examples to train network
             while not(batch is None):
                 batch_count += 1
-                print "Batch #", str(batch_count)
+                # print "Batch #", str(batch_count)
 
                 count = 0
                 for training_example in batch:
@@ -202,3 +202,19 @@ class ConvNN(object):
         # Compute predicted output
         print "Predicted ", current_input
         return current_input
+
+    def serialise_params(self):
+        count = 0
+
+        for layer in self.layers:
+            if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                count += 1
+                layer.serialise_parameters(count)
+
+    def init_params_from_file(self):
+        count = 0
+
+        for layer in self.layers:
+            if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                count += 1
+                layer.init_parameters_from_file(count)

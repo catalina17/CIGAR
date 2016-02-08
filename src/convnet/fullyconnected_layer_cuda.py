@@ -116,6 +116,12 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
                      driver.InOut(self.biases),
                      block=(self.num_nodes, 1, 1), grid=(self.input_shape[0], 1, 1))
 
+    def serialise_parameters(self, file_idx):
+        super(FullyConnectedLayerCUDA, self).serialise_parameters(file_idx)
+
+    def init_parameters_from_file(self, file_idx):
+        super(FullyConnectedLayerCUDA, self).init_parameters_from_file(file_idx)
+
 if __name__ == "__main__":
     dummy_input = np.ones((192,))
     # print "Input:\n", dummy_input

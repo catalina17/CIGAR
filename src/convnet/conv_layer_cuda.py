@@ -147,6 +147,12 @@ class ConvLayerCUDA(ConvLayer):
     def update_parameters(self, learning_rate):
         super(ConvLayerCUDA, self).update_parameters(learning_rate)
 
+    def serialise_parameters(self, file_idx):
+        super(ConvLayerCUDA, self).serialise_parameters(file_idx)
+
+    def init_parameters_from_file(self, file_idx):
+        super(ConvLayerCUDA, self).init_parameters_from_file(file_idx)
+
 if __name__ == '__main__':
     dummy_input = np.ones((128, 599))
     # print "Input:\n", dummy_input

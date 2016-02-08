@@ -5,7 +5,7 @@ from scipy.misc import imread
 
 class DataProvider(object):
 
-    def __init__(self, batch_size, num_genres=4, genre_dataset_size=100, batch_mode=False):
+    def __init__(self, batch_size, num_genres, genre_dataset_size=100, batch_mode=False):
         """
 
         Parameters
@@ -21,7 +21,7 @@ class DataProvider(object):
         self.batch_mode = batch_mode
 
         self.num_genres = num_genres
-        self.genres = ['classical', 'metal', 'jazz', 'disco']
+        self.genres = ['classical', 'metal', 'blues', 'disco', 'hiphop', 'reggae']
 
         self.current_batch_start_index = 0
 
@@ -31,8 +31,16 @@ class DataProvider(object):
         self.test_indices = np.empty((self.num_genres, self.genre_dataset_size * 2 / 10), dtype=int)
         self.test_indices[0] = np.array([9,13,2,6,20,11,63,58,23,51,76,99,50,70,85,55,73,91,80,22])
         self.test_indices[1] = np.array([99,42,9,32,0,91,84,80,59,12,4,56,5,27,38,23,19,18,87,69])
-        self.test_indices[2] = np.array([22,58,55,76,39,56,37,77,3,66,33,78,49,27,32,24,44,8,95,88])
-        self.test_indices[3] = np.array([52,0,84,62,7,18,14,47,70,98,56,90,24,17,42,13,28,45,3,38])
+        if num_genres > 2:
+            self.test_indices[2] = np.array([22,58,55,76,39,56,37,77,3,66,33,78,49,27,32,24,44,8,95,
+                                             88])
+            self.test_indices[3] = np.array([52,0,84,62,7,18,14,47,70,98,56,90,24,17,42,13,28,45,3,
+                                             38])
+        if num_genres > 4:
+            self.test_indices[4] = np.array([39,24,4,18,79,12,40,56,64,28,52,15,88,83,91,96,81,11,
+                                             36,45])
+            self.test_indices[5] = np.array([62,78,3,67,51,32,75,35,90,97,58,92,19,44,33,42,87,74,
+                                             57,53])
 
     def get_input_shape(self):
         return (128, 599)
@@ -51,6 +59,8 @@ class DataProvider(object):
         train_count = 0
         for genre in self.genres:
             igenre = self.genres.index(genre)
+            if igenre >= self.num_genres:
+                break
 
             test_count = 0
             for i in range(self.genre_dataset_size):

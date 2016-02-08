@@ -79,9 +79,8 @@ class ConvLayerCUDA(ConvLayer):
                 int idx = threadIdx.y * FILTER_WIDTH + threadIdx.x;
                 temp[idx] = 0.0;
                 if (blockIdx.x - threadIdx.x >= 0 && blockIdx.x - threadIdx.x < OUT_WIDTH) {
-                    for (int i = 0; i < FILTER_HEIGHT; ++i) {
-                        temp[idx] += out_grad[out_idx] * f_weights[f_weights_idx +
-                                                                   i * FILTER_WIDTH];
+                    for (int i = 0; i < FILTER_HEIGHT * FILTER_WIDTH; i += FILTER_WIDTH) {
+                        temp[idx] += out_grad[out_idx] * f_weights[f_weights_idx + i];
                     }
                 }
 

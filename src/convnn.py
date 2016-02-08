@@ -1,15 +1,7 @@
-from convnet.activation_layer import ActivationLayer
 from convnet.conv_layer import ConvLayer
-from convnet.conv_layer_cuda import ConvLayerCUDA
-from convnet.globalpooling_layer import GlobalPoolingLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
-from convnet.maxpooling_layer import MaxPoolingLayer
-from convnet.maxpooling_layer_cuda import MaxPoolingLayerCUDA
-from convnet.softmax_layer import SoftmaxLayer
-from data_provider import DataProvider
 
 import numpy as np
-import time
 
 
 class ConvNN(object):
@@ -27,7 +19,7 @@ class ConvNN(object):
         self.data_provider = data_provider
         self.results = None
 
-    def _setup_layers(self, cnn_input_shape, cnn_output_shape):
+    def setup_layers(self, cnn_input_shape, cnn_output_shape):
         """
 
         Parameters
@@ -64,8 +56,8 @@ class ConvNN(object):
                             mse=np.zeros(num_iters), test_mse=np.zeros(num_iters))
 
         # Initialise layers with corresponding input/output dimensions
-        self._setup_layers(self.data_provider.get_input_shape(),
-                           self.data_provider.get_output_shape())
+        self.setup_layers(self.data_provider.get_input_shape(),
+                          self.data_provider.get_output_shape())
         self.data_provider.setup()
 
         for it in range(num_iters):
@@ -124,7 +116,7 @@ class ConvNN(object):
             for layer in self.layers:
                 current_input = layer.forward_prop(current_input)
 
-            print "Predicted output: ", current_input, "- True output: ", training_example['out']
+            # print "Predicted output: ", current_input, "- True output: ", training_example['out']
 
             if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
@@ -210,37 +202,3 @@ class ConvNN(object):
         # Compute predicted output
         print "Predicted ", current_input
         return current_input
-
-if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayerCUDA(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         MaxPoolingLayerCUDA((1, 4)),
-
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         MaxPoolingLayerCUDA((1, 2)),
-
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         GlobalPoolingLayer(),
-
-                         FullyConnectedLayer(64, 0, weight_scale=0.072),
-                         ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(32, 0, weight_scale=0.125),
-                         ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(4, 0, weight_scale=0.1),
-                         SoftmaxLayer()],
-                        DataProvider(8, batch_mode=False))
-
-    neural_net._setup_layers((128, 599), (4, ))
-
-    time1 = time.time()
-    neural_net.train(learning_rate=0.01, num_iters=100, lrate_schedule=True)
-    time2 = time.time()
-    print('Time taken: %.1fs' % (time2 - time1))
-
-    print "\nRESULTS:\n"
-    for result in neural_net.results:
-        print result
-        for val in neural_net.results[result]:
-            print val

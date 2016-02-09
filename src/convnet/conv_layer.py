@@ -114,20 +114,20 @@ class ConvLayer(Layer):
         self.d_biases[...] = 0
 
     def serialise_parameters(self, file_idx):
-        param_file = open('../saved_params/Conv_' + str(file_idx) + '_weights', 'w')
+        param_file = open('saved_params/Conv_' + str(file_idx) + '_weights', 'w')
         np.save(param_file, self.filter_weights)
         param_file.close()
 
-        param_file = open('../saved_params/Conv_' + str(file_idx) + '_biases', 'w')
+        param_file = open('saved_params/Conv_' + str(file_idx) + '_biases', 'w')
         np.save(param_file, self.biases)
         param_file.close()
 
     def init_parameters_from_file(self, file_idx):
-        param_file = open('../saved_params/FC_' + str(file_idx) + '_weights', 'rb')
+        param_file = open('saved_params/FC_' + str(file_idx) + '_weights', 'rb')
         self.filter_weights = np.load(param_file)
         param_file.close()
 
-        param_file = open('../saved_params/FC_' + str(file_idx) + '_biases', 'rb')
+        param_file = open('saved_params/FC_' + str(file_idx) + '_biases', 'rb')
         self.biases = np.load(param_file)
         param_file.close()
 

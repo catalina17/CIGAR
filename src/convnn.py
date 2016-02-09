@@ -1,3 +1,4 @@
+from convnet.conv_layer_cuda import ConvLayerCUDA
 from convnet.conv_layer import ConvLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
 
@@ -83,7 +84,7 @@ class ConvNN(object):
                     # Backpropagation phase
                     predicted_output = current_input
                     # print "Predicted: ", predicted_output,\
-                    #      "--- Actual: ", training_example['out'], "-", str(training_example['id'])
+                    #       "--- Actual: ", training_example['out'], "-", str(training_example['id'])
 
                     current_gradient = self.layers[-1].initial_gradient(predicted_output,
                                                                         training_example['out'])
@@ -92,7 +93,8 @@ class ConvNN(object):
 
                     # Update parameters - online mode
                     for layer in self.layers:
-                        if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                        if type(layer) in [ConvLayerCUDA, FullyConnectedLayer]:
+                            print layer.__class__.__name__
                             if lrate_schedule:
                                 layer.update_parameters(learning_rate * (num_iters - it + 1.0) /
                                                         num_iters)
@@ -207,7 +209,7 @@ class ConvNN(object):
         count = 0
 
         for layer in self.layers:
-            if type(layer) in [ConvLayer, FullyConnectedLayer]:
+            if type(layer) in [ConvLayerCUDA, FullyConnectedLayer]:
                 count += 1
                 layer.serialise_parameters(count)
 
@@ -215,6 +217,6 @@ class ConvNN(object):
         count = 0
 
         for layer in self.layers:
-            if type(layer) in [ConvLayer, FullyConnectedLayer]:
+            if type(layer) in [ConvLayerCUDA, FullyConnectedLayer]:
                 count += 1
                 layer.init_parameters_from_file(count)

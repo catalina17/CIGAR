@@ -87,6 +87,8 @@ def four_class():
         for val in neural_net.results[result]:
             print val
 
+    neural_net.serialise_params()
+
 
 def two_class():
     neural_net = ConvNN([ConvLayerCUDA(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),

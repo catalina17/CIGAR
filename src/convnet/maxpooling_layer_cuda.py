@@ -23,9 +23,9 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
         self.current_input = input
 
         if (len(self.get_output_shape()) == 1):
-            output = np.empty((1, self.get_output_shape()[0])).astype(np.float32)
+            output = np.empty((1, self.get_output_shape()[0])).astype(np.double)
         else:
-            output = np.empty(self.get_output_shape()).astype(np.float32)
+            output = np.empty(self.get_output_shape()).astype(np.double)
 
         self.max_activation_indices = np.empty(self.get_output_shape()).astype(np.int32)
 
@@ -35,7 +35,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                 #define INPUT_HEIGHT """ + str(self.input_shape[0]) + """
                 #define INPUT_WIDTH """ + str(self.input_shape[1] / 4) + """
 
-                __global__ void max_pool(float4 *in, float *dest, int *max_idx_w) {
+                __global__ void max_pool(double4 *in, double *dest, int *max_idx_w) {
                     int col = blockIdx.x * blockDim.x + threadIdx.x;
                     int row = blockIdx.y * blockDim.y;
 
@@ -45,8 +45,8 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                     int idx = col + row * INPUT_WIDTH;
                     int start = col << 2;
 
-                    float4 val = in[idx];
-                    float max_val = val.x;
+                    double4 val = in[idx];
+                    double max_val = val.x;
                     int max_idx = start;
 
                     if (max_val < val.y) {
@@ -73,7 +73,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                 #define INPUT_HEIGHT """ + str(self.input_shape[0]) + """
                 #define INPUT_WIDTH """ + str(self.input_shape[1] / 2) + """
 
-                __global__ void max_pool(float2 *in, float *dest, int *max_idx_w) {
+                __global__ void max_pool(double2 *in, double *dest, int *max_idx_w) {
                     int col = blockIdx.x * blockDim.x + threadIdx.x;
                     int row = blockIdx.y * blockDim.y;
 
@@ -83,7 +83,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                     int idx = col + row * INPUT_WIDTH;
                     int start = col << 1;
 
-                    float max_val = in[idx].x;
+                    double max_val = in[idx].x;
                     max_idx_w[idx] = start;
 
                     if (max_val < in[idx].y) {
@@ -96,7 +96,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                 """)
 
         max_pool = mod.get_function('max_pool')
-        max_pool(driver.In(input.astype(np.float32)), driver.Out(output),
+        max_pool(driver.In(input.astype(np.double)), driver.Out(output),
                  driver.Out(self.max_activation_indices), block=(self.filter_shape[1], 1, 1),
                  grid=(self.get_output_shape()[1], self.get_output_shape()[0], 1))
 
@@ -108,12 +108,12 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
             return output
 
     def back_prop(self, output_grad):
-        input_grad = np.zeros(self.input_shape).astype(np.float32)
+        input_grad = np.zeros(self.input_shape).astype(np.double)
 
         mod = SourceModule("""
             #define INGRAD_WIDTH """ + str(input_grad.shape[1]) + """
 
-            __global__ void max_pool_back(float *outgrad, float *ingrad, int *max_idx_w) {
+            __global__ void max_pool_back(double *outgrad, double *ingrad, int *max_idx_w) {
                 int col = blockIdx.x * blockDim.x + threadIdx.x;
                 int row = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -126,7 +126,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
             """)
 
         max_pool_back = mod.get_function('max_pool_back')
-        max_pool_back(driver.In(output_grad.astype(np.float32)), driver.InOut(input_grad),
+        max_pool_back(driver.In(output_grad.astype(np.double)), driver.InOut(input_grad),
                       driver.In(self.max_activation_indices),
                       block=(8, 4, 1),
                       grid=(output_grad.shape[1] / 8, output_grad.shape[0] / 4, 1))

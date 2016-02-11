@@ -22,14 +22,14 @@ class ConvLayer(Layer):
         print "Filter shape: " + str(filter_shape)
 
         self.filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1])).\
-            astype(np.float32)
+            astype(np.double)
         for i in range(num_filters):
             self.filter_weights[i] = np.random.normal(loc=0, scale=weight_scale,
-                                                      size=filter_shape).astype(np.float32)
-        self.d_filter_weights = np.zeros(self.filter_weights.shape).astype(np.float32)
+                                                      size=filter_shape).astype(np.double)
+        self.d_filter_weights = np.zeros(self.filter_weights.shape).astype(np.double)
 
-        self.biases = np.zeros(num_filters).astype(np.float32)
-        self.d_biases = np.zeros(num_filters).astype(np.float32)
+        self.biases = np.zeros(num_filters).astype(np.double)
+        self.d_biases = np.zeros(num_filters).astype(np.double)
 
         self.weight_decay = weight_decay
 
@@ -140,17 +140,15 @@ if __name__ == "__main__":
     layer.set_input_shape((128, 599))
 
     start = time.time()
-    # print "\n--->> Forward propagation:\n",
-    layer.forward_prop(dummy_input)
+    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
     finish = time.time()
     print "Fwd prop - time taken: ", finish - start
 
     dummy_output_grad = np.ones((64, 596)) / 2
     # print "\nOutput gradient:\n", dummy_output_grad
 
-    # print "\n--->> Backpropagation:\n",
     start = time.time()
-    layer.back_prop(dummy_output_grad)
+    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
     finish = time.time()
     print "Back prop - time taken: ", finish - start
 

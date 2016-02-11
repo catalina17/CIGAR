@@ -1,4 +1,5 @@
 from convnet.activation_layer import ActivationLayer
+from convnet.conv_layer import ConvLayer
 from convnet.conv_layer_cuda import ConvLayerCUDA
 from convnet.globalpooling_layer import GlobalPoolingLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
@@ -11,19 +12,19 @@ import time
 
 
 def six_class():
-    neural_net = ConvNN([ConvLayerCUDA(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
+    neural_net = ConvNN([ConvLayer(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 4)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          GlobalPoolingLayer(),
 
@@ -50,34 +51,30 @@ def six_class():
 
 
 def four_class():
-    neural_net = ConvNN([ConvLayerCUDA(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
+    neural_net = ConvNN([ConvLayer(32, (128, 4), 0, weight_scale=0.044, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 4)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(32, (32, 4), 0, weight_scale=0.088, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         MaxPoolingLayerCUDA((1, 2)),
-
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(32, (32, 4), 0, weight_scale=0.088, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(64, 0, weight_scale=0.072),
+                         FullyConnectedLayer(32, 0, weight_scale=0.125),
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(32, 0, weight_scale=0.125),
                          ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(4, 0, weight_scale=0.1),
+                         FullyConnectedLayer(4, 0, weight_scale=0.17),
                          SoftmaxLayer()],
                         DataProvider(8, num_genres=4, batch_mode=False))
 
     neural_net.setup_layers((128, 599), (4, ))
 
     time1 = time.time()
-    neural_net.train(learning_rate=0.005, num_iters=80, lrate_schedule=True)
+    neural_net.train(learning_rate=0.005, num_iters=120, lrate_schedule=True)
     time2 = time.time()
     print('Time taken: %.1fs' % (time2 - time1))
 
@@ -91,15 +88,15 @@ def four_class():
 
 
 def two_class():
-    neural_net = ConvNN([ConvLayerCUDA(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
+    neural_net = ConvNN([ConvLayer(64, (128, 4), 0, weight_scale=0.044, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 4)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayerCUDA(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
+                         ConvLayer(64, (64, 4), 0, weight_scale=0.0625, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          GlobalPoolingLayer(),
 

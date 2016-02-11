@@ -80,6 +80,8 @@ class ConvNN(object):
                     current_input = training_example['spec']
                     for layer in self.layers:
                         current_input = layer.forward_prop(current_input)
+                        # print layer.__class__.__name__
+                        # print np.max(current_input) - np.min(current_input)
 
                     # Backpropagation phase
                     predicted_output = current_input
@@ -90,11 +92,12 @@ class ConvNN(object):
                                                                         training_example['out'])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
+                        # print layer.__class__.__name__
+                        # print np.max(current_gradient) - np.min(current_gradient)
 
                     # Update parameters - online mode
                     for layer in self.layers:
-                        if type(layer) in [ConvLayerCUDA, FullyConnectedLayer]:
-                            print layer.__class__.__name__
+                        if type(layer) in [ConvLayer, FullyConnectedLayer]:
                             if lrate_schedule:
                                 layer.update_parameters(learning_rate * (num_iters - it + 1.0) /
                                                         num_iters)
@@ -209,7 +212,7 @@ class ConvNN(object):
         count = 0
 
         for layer in self.layers:
-            if type(layer) in [ConvLayerCUDA, FullyConnectedLayer]:
+            if type(layer) in [ConvLayer, FullyConnectedLayer]:
                 count += 1
                 layer.serialise_parameters(count)
 
@@ -217,6 +220,6 @@ class ConvNN(object):
         count = 0
 
         for layer in self.layers:
-            if type(layer) in [ConvLayerCUDA, FullyConnectedLayer]:
+            if type(layer) in [ConvLayer, FullyConnectedLayer]:
                 count += 1
                 layer.init_parameters_from_file(count)

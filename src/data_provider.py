@@ -113,6 +113,9 @@ class DataProvider(object):
     def get_test_data(self):
         return self.test_set.flatten()
 
+    def get_test_data_for_genre(self, genre):
+        return self.test_set[self.genres.index(genre), :].flatten()
+
     def reset(self):
         self.current_batch_start_index = 0
 

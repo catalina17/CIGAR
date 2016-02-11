@@ -1,4 +1,3 @@
-from convnet.conv_layer_cuda import ConvLayerCUDA
 from convnet.conv_layer import ConvLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
 
@@ -223,3 +222,30 @@ class ConvNN(object):
             if type(layer) in [ConvLayer, FullyConnectedLayer]:
                 count += 1
                 layer.init_parameters_from_file(count)
+
+    def test_data_activations_for_conv_layer(self, layer_id, genre):
+        self.data_provider.setup()
+        test_data = self.data_provider.get_test_data_for_genre(genre)
+        activations_for_test_data = np.empty(test_data.shape, dtype=dict)
+
+        example_count = -1
+        for example in test_data:
+            count = 0
+            example_count += 1
+
+            current_input = example['spec']
+            for layer in self.layers:
+                current_input = layer.forward_prop(current_input)
+                if type(layer) == ConvLayer:
+                    count += 1
+
+                if count == layer_id:
+                    break
+
+            activations_for_test_data[example_count] = {
+                'filter_activations': current_input,
+                'class_prob': self.predict(example['spec'])[np.argmax(example['out'])],
+                'id': example['id'],
+            }
+
+        return activations_for_test_data

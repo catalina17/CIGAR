@@ -106,7 +106,7 @@ class MaxPoolingLayer(Layer):
         return shape
 
 if __name__ == "__main__":
-    dummy_input = np.random.randn(64, 596)
+    dummy_input = np.random.randn(32, 596)
     print "Input:\n", dummy_input
 
     layer = MaxPoolingLayer(filter_shape=(1, 4))
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     start = time.time()
     print "Forward propagation:\n", layer.forward_prop(dummy_input)
 
-    dummy_output_grad = np.ones((64, 149))
+    dummy_output_grad = np.ones((32, 149))
     print "Output gradient:\n", dummy_output_grad
 
     print "Backpropagation:\n", layer.back_prop(dummy_output_grad)

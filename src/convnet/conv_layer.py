@@ -123,11 +123,11 @@ class ConvLayer(Layer):
         param_file.close()
 
     def init_parameters_from_file(self, file_idx):
-        param_file = open('saved_params/FC_' + str(file_idx) + '_weights', 'rb')
+        param_file = open('saved_params/Conv_' + str(file_idx) + '_weights', 'rb')
         self.filter_weights = np.load(param_file)
         param_file.close()
 
-        param_file = open('saved_params/FC_' + str(file_idx) + '_biases', 'rb')
+        param_file = open('saved_params/Conv_' + str(file_idx) + '_biases', 'rb')
         self.biases = np.load(param_file)
         param_file.close()
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     dummy_input = np.ones((128, 599))
     # print "Input:\n", dummy_input
 
-    layer = ConvLayer(num_filters=64, filter_shape=(128, 4), weight_decay=0, weight_scale=0.01,
+    layer = ConvLayer(num_filters=32, filter_shape=(128, 4), weight_decay=0, weight_scale=0.01,
                       padding_mode=False)
     layer.set_input_shape((128, 599))
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     finish = time.time()
     print "Fwd prop - time taken: ", finish - start
 
-    dummy_output_grad = np.ones((64, 596)) / 2
+    dummy_output_grad = np.ones((32, 596)) / 2
     # print "\nOutput gradient:\n", dummy_output_grad
 
     start = time.time()

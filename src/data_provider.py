@@ -21,26 +21,41 @@ class DataProvider(object):
         self.batch_mode = batch_mode
 
         self.num_genres = num_genres
-        self.genres = ['classical', 'metal', 'blues', 'disco', 'hiphop', 'reggae']
+        self.genres = ['classical', 'metal', 'blues', 'disco', 'hiphop', 'reggae', 'country', 'pop',
+                       'jazz', 'rock']
 
         self.current_batch_start_index = 0
 
         self.train_set = None
         self.test_set = None
 
-        self.test_indices = np.empty((self.num_genres, self.genre_dataset_size * 2 / 10), dtype=int)
-        self.test_indices[0] = np.array([9,13,2,6,20,11,63,58,23,51,76,99,50,70,85,55,73,91,80,22])
-        self.test_indices[1] = np.array([99,42,9,32,0,91,84,80,59,12,4,56,5,27,38,23,19,18,87,69])
+        self.test_indices = np.empty((self.num_genres, self.genre_dataset_size / 10), dtype=int)
+        indices = np.array(range(100))
+
+        np.random.shuffle(indices)
+        self.test_indices[0] = indices[:10]
+        np.random.shuffle(indices)
+        self.test_indices[1] = indices[:10]
         if num_genres > 2:
-            self.test_indices[2] = np.array([22,58,55,76,39,56,37,77,3,66,33,78,49,27,32,24,44,8,95,
-                                             88])
-            self.test_indices[3] = np.array([52,0,84,62,7,18,14,47,70,98,56,90,24,17,42,13,28,45,3,
-                                             38])
+            np.random.shuffle(indices)
+            self.test_indices[2] = indices[:10]
+            np.random.shuffle(indices)
+            self.test_indices[3] = indices[:10]
         if num_genres > 4:
-            self.test_indices[4] = np.array([39,24,4,18,79,12,40,56,64,28,52,15,88,83,91,96,81,11,
-                                             36,45])
-            self.test_indices[5] = np.array([62,78,3,67,51,32,75,35,90,97,58,92,19,44,33,42,87,74,
-                                             57,53])
+            np.random.shuffle(indices)
+            self.test_indices[4] = indices[:10]
+            np.random.shuffle(indices)
+            self.test_indices[5] = indices[:10]
+        if num_genres > 6:
+            np.random.shuffle(indices)
+            self.test_indices[6] = indices[:10]
+            np.random.shuffle(indices)
+            self.test_indices[7] = indices[:10]
+        if num_genres > 8:
+            np.random.shuffle(indices)
+            self.test_indices[8] = indices[:10]
+            np.random.shuffle(indices)
+            self.test_indices[9] = indices[:10]
 
     def get_input_shape(self):
         return (128, 599)
@@ -50,11 +65,11 @@ class DataProvider(object):
 
     def setup(self):
         if self.batch_mode:
-            self.train_set = np.empty(self.genre_dataset_size * 16 / 10, dtype=dict)
+            self.train_set = np.empty(self.genre_dataset_size * 18 / 10, dtype=dict)
         else:
-            self.train_set = np.empty((self.num_genres, self.genre_dataset_size * 8 / 10),
+            self.train_set = np.empty((self.num_genres, self.genre_dataset_size * 9 / 10),
                                       dtype=dict)
-        self.test_set = np.empty((self.num_genres, self.genre_dataset_size * 2 / 10), dtype=dict)
+        self.test_set = np.empty((self.num_genres, self.genre_dataset_size / 10), dtype=dict)
 
         train_count = 0
         for genre in self.genres:
@@ -83,7 +98,7 @@ class DataProvider(object):
 
     def get_next_batch(self):
         if self.batch_mode:
-            if self.current_batch_start_index < self.genre_dataset_size * 16 / 10:
+            if self.current_batch_start_index < self.genre_dataset_size * 18 / 10:
                 batch = self.train_set[self.current_batch_start_index:
                                        self.current_batch_start_index + self.batch_size]
                 self.current_batch_start_index += self.batch_size
@@ -91,7 +106,7 @@ class DataProvider(object):
             else:
                 return None
 
-        if self.current_batch_start_index < self.genre_dataset_size * 8 / 10:
+        if self.current_batch_start_index < self.genre_dataset_size * 9 / 10:
             batch = np.empty(self.batch_size, dtype=dict)
             subbatch_size = self.batch_size / self.num_genres
 

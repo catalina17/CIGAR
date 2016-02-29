@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 for i in range(3):
     filters = np.load('./saved_params/Conv_' + str(i+1) + '_weights')
@@ -16,5 +17,8 @@ for i in range(3):
         plt.gca().xaxis.set_major_locator(plt.NullLocator())
         plt.gca().yaxis.set_major_locator(plt.NullLocator())
 
-        plt.savefig('./filters/Conv_' + str(i+1) + '/filter' + str(count) + '.png',
+        dir_path = './filters/6genres/Conv_' + str(i+1)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        plt.savefig(dir_path + '/filter' + str(count) + '.png',
                     bbox_inches="tight", pad_inches=0)

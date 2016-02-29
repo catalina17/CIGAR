@@ -51,9 +51,7 @@ class ConvNN(object):
         lrate_schedule : bool
 
         """
-        self.results = dict(test=np.zeros(num_iters), train=np.zeros(num_iters),
-                            train_loss=np.zeros(num_iters), test_loss=np.zeros(num_iters),
-                            mse=np.zeros(num_iters), test_mse=np.zeros(num_iters))
+        self.results = dict(test=0.0, train=0.0, test_loss=0.0, train_loss=0.0)
 
         # Initialise layers with corresponding input/output dimensions
         self.setup_layers(self.data_provider.get_input_shape(),
@@ -65,34 +63,22 @@ class ConvNN(object):
 
             self.data_provider.reset()
             batch = self.data_provider.get_next_batch()
-            batch_count = 0
+
             # If available, use the next batch of training examples to train network
             while not(batch is None):
-                batch_count += 1
-                # print "Batch #", str(batch_count)
-
-                count = 0
                 for training_example in batch:
-                    count += 1
-
                     # Forward propagation phase -- calculate output for training example
                     current_input = training_example['spec']
                     for layer in self.layers:
                         current_input = layer.forward_prop(current_input)
-                        # print layer.__class__.__name__
-                        # print np.max(current_input) - np.min(current_input)
 
                     # Backpropagation phase
                     predicted_output = current_input
-                    # print "Predicted: ", predicted_output,\
-                    #       "--- Actual: ", training_example['out'], "-", str(training_example['id'])
 
                     current_gradient = self.layers[-1].initial_gradient(predicted_output,
                                                                         training_example['out'])
                     for layer in reversed(self.layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
-                        # print layer.__class__.__name__
-                        # print np.max(current_gradient) - np.min(current_gradient)
 
                     # Update parameters - online mode
                     for layer in self.layers:
@@ -105,14 +91,12 @@ class ConvNN(object):
 
                 batch = self.data_provider.get_next_batch()
 
-            all_training_data = self.data_provider.get_all_training_data()
-            self.error_and_loss(all_training_data, it)
+        all_training_data = self.data_provider.get_all_training_data()
+        self.error_and_loss(all_training_data)
+        self.test()
 
-            self.test(it)
-
-    def error_and_loss(self, batch, iter_idx):
+    def error_and_loss(self, batch):
         error = 0.0
-        mse = 0.0
         loss = 0.0
 
         for training_example in batch:
@@ -124,16 +108,13 @@ class ConvNN(object):
 
             if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
-                mse += np.sum((current_input - training_example['out']) ** 2)
             loss += self.layers[-1].loss(current_input, training_example['out'])
 
         print "\nTraining error:\n", error / batch.shape[0]
-        print "\nTraining MSE:\n", mse / batch.shape[0]
         print "\nTraining loss:\n", loss / batch.shape[0]
 
-        self.results['train'][iter_idx] = error / batch.shape[0]
-        self.results['mse'][iter_idx] = mse / batch.shape[0]
-        self.results['train_loss'][iter_idx] = loss / batch.shape[0]
+        self.results['train'] = error / batch.shape[0]
+        self.results['train_loss'] = loss / batch.shape[0]
 
     def error(self, batch):
         error = 0.0
@@ -163,10 +144,9 @@ class ConvNN(object):
         loss /= training_batch.shape[0]
         return loss
 
-    def test(self, iter_idx):
+    def test(self):
         test_data = self.data_provider.get_test_data()
         test_error = 0.0
-        test_mse = 0.0
         test_loss = 0.0
 
         for test_example in test_data:
@@ -176,15 +156,12 @@ class ConvNN(object):
             test_loss += -np.sum(test_example['out'] * np.log(output / np.sum(output)))
             if np.argmax(output) != np.argmax(test_example['out']):
                 test_error += 1.0
-                test_mse += np.sum((output - test_example['out']) ** 2)
 
         print "Test error:", test_error / test_data.shape[0]
-        print "Test MSE:", test_mse / test_data.shape[0]
         print "Test loss:", test_loss / test_data.shape[0]
 
-        self.results['test'][iter_idx] = test_error / test_data.shape[0]
-        self.results['test_mse'][iter_idx] = test_mse / test_data.shape[0]
-        self.results['test_loss'][iter_idx] = test_loss / test_data.shape[0]
+        self.results['test'] = test_error / test_data.shape[0]
+        self.results['test_loss'] = test_loss / test_data.shape[0]
 
     def predict(self, input):
         """
@@ -215,13 +192,19 @@ class ConvNN(object):
                 count += 1
                 layer.serialise_parameters(count)
 
-    def init_params_from_file(self):
+    def init_params_from_file(self, conv_only=False):
         count = 0
 
         for layer in self.layers:
-            if type(layer) in [ConvLayer, FullyConnectedLayer]:
-                count += 1
-                layer.init_parameters_from_file(count)
+            if conv_only:
+                if type(layer) == ConvLayer:
+                    count += 1
+                    layer.init_parameters_from_file(count)
+                    print 'Weights initialised in layer Conv' + str(count)
+            else:
+                if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                    count += 1
+                    layer.init_parameters_from_file(count)
 
     def test_data_activations_for_conv_layer(self, layer_id, genre):
         self.data_provider.setup()

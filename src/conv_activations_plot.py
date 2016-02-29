@@ -28,38 +28,40 @@ if __name__ == '__main__':
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(32, 0, weight_scale=0.125),
                          ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(4, 0, weight_scale=0.17),
+                         FullyConnectedLayer(6, 0, weight_scale=0.17),
                          SoftmaxLayer()],
-                        DataProvider(8, num_genres=4, batch_mode=False))
+                        DataProvider(8, num_genres=6, batch_mode=False))
 
-    neural_net.setup_layers((128, 599), (4, ))
+    neural_net.setup_layers((128, 599), (6, ))
     neural_net.init_params_from_file()
 
-    for layer_id in range(3):
-        activations_for_test_data = neural_net.test_data_activations_for_conv_layer(layer_id + 1,
-                                                                                    'blues')
+    genres = ['classical', 'metal', 'blues', 'disco', 'hiphop', 'reggae']
 
-        for result in activations_for_test_data:
-            print result['filter_activations'].shape[1]
-            for filter_idx in range(result['filter_activations'].shape[0]):
-                x = np.arange(0, result['filter_activations'].shape[1], 1)
-                y = result['filter_activations'][filter_idx]
+    for genre in genres:
+        for layer_id in range(3):
+            activations_for_test_data = neural_net.test_data_activations_for_conv_layer(
+                layer_id + 1, genre)
 
-                dir_path = './activations/conv_layer' + str(layer_id + 1) + '/filter' +\
-                           str(filter_idx + 1)
-                if not os.path.exists(dir_path):
-                    os.makedirs(dir_path)
+            for result in activations_for_test_data:
+                for filter_idx in range(result['filter_activations'].shape[0]):
+                    x = np.arange(0, result['filter_activations'].shape[1], 1)
+                    y = result['filter_activations'][filter_idx]
 
-                plt.plot(x, y)
-                plt.gcf().set_size_inches(7.72903226, 1.6)
-                plt.axis('off')
-                plt.gca().set_axis_off()
-                plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
-                plt.margins(0, 0)
-                plt.gca().xaxis.set_major_locator(plt.NullLocator())
-                plt.gca().yaxis.set_major_locator(plt.NullLocator())
+                    dir_path = './activations/6genres/conv_layer' + str(layer_id + 1) + '/filter' +\
+                               str(filter_idx + 1)
+                    if not os.path.exists(dir_path):
+                        os.makedirs(dir_path)
 
-                plt.savefig(dir_path + '/blues' + str(result['id']) + '_p=' +
-                            str(round(result['class_prob'], 2)) + '.png',
-                            bbox_inches="tight", pad_inches=0)
-                plt.clf()
+                    plt.plot(x, y)
+                    plt.gcf().set_size_inches(7.72903226, 1.6)
+                    plt.axis('off')
+                    plt.gca().set_axis_off()
+                    plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+                    plt.margins(0, 0)
+                    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+                    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+
+                    plt.savefig(dir_path + '/' + genre + str(result['id']) + '_p=' +
+                                str(round(result['class_prob'], 2)) + '.png',
+                                bbox_inches="tight", pad_inches=0)
+                    plt.clf()

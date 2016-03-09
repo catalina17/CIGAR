@@ -1,6 +1,8 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import os
+
+import matplotlib.pyplot as plt
+
 
 for i in range(3):
     filters = np.load('./saved_params/Conv_' + str(i+1) + '_weights')

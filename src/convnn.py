@@ -1,7 +1,7 @@
+import numpy as np
+
 from convnet.conv_layer import ConvLayer
 from convnet.fullyconnected_layer import FullyConnectedLayer
-
-import numpy as np
 
 
 class ConvNN(object):

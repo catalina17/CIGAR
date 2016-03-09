@@ -1,10 +1,11 @@
-from fullyconnected_layer import FullyConnectedLayer
-from pycuda.compiler import SourceModule
-
-import pycuda.driver as driver
-import pycuda.autoinit
 import numpy as np
 import time
+
+import pycuda.autoinit
+import pycuda.driver as driver
+from pycuda.compiler import SourceModule
+
+from fullyconnected_layer import FullyConnectedLayer
 
 
 class FullyConnectedLayerCUDA(FullyConnectedLayer):

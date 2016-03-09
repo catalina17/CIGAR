@@ -1,6 +1,7 @@
-from layer import Layer
 import numpy as np
 import time
+
+from layer import Layer
 
 
 class MaxPoolingLayer(Layer):

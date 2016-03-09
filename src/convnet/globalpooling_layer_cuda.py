@@ -1,10 +1,11 @@
-from globalpooling_layer import GlobalPoolingLayer
-from pycuda.compiler import SourceModule
-
-import pycuda.driver as driver
-import pycuda.autoinit
 import numpy as np
 import time
+
+import pycuda.autoinit
+import pycuda.driver as driver
+from pycuda.compiler import SourceModule
+
+from globalpooling_layer import GlobalPoolingLayer
 
 
 class GlobalPoolingLayerCUDA(GlobalPoolingLayer):

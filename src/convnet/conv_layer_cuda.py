@@ -1,10 +1,11 @@
-from conv_layer import ConvLayer
-from pycuda.compiler import SourceModule
-
-import pycuda.driver as driver
-import pycuda.autoinit
 import numpy as np
 import time
+
+import pycuda.autoinit
+import pycuda.driver as driver
+from pycuda.compiler import SourceModule
+
+from conv_layer import ConvLayer
 
 
 class ConvLayerCUDA(ConvLayer):

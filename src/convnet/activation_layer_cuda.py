@@ -1,10 +1,11 @@
-from activation_layer import ActivationLayer
-from pycuda.compiler import SourceModule
+import numpy as np
+import time
 
 import pycuda.driver as driver
 import pycuda.autoinit
-import numpy as np
-import time
+
+from activation_layer import ActivationLayer
+from pycuda.compiler import SourceModule
 
 
 class ActivationLayerCUDA(ActivationLayer):

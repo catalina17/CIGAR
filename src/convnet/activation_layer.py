@@ -1,7 +1,8 @@
-from layer import Layer
-from util import math
 import numpy as np
 import time
+
+from layer import Layer
+from util import math
 
 
 class ActivationLayer(Layer):

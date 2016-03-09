@@ -1,10 +1,11 @@
-from maxpooling_layer import MaxPoolingLayer
-from pycuda.compiler import SourceModule
-
-import pycuda.driver as driver
-import pycuda.autoinit
 import numpy as np
 import time
+
+import pycuda.autoinit
+import pycuda.driver as driver
+from pycuda.compiler import SourceModule
+
+from maxpooling_layer import MaxPoolingLayer
 
 
 class MaxPoolingLayerCUDA(MaxPoolingLayer):

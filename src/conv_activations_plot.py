@@ -1,3 +1,8 @@
+import numpy as np
+import os
+
+import matplotlib.pyplot as plt
+
 from convnn import ConvNN
 from convnet.conv_layer import ConvLayer
 from convnet.activation_layer import ActivationLayer
@@ -7,28 +12,25 @@ from convnet.fullyconnected_layer import FullyConnectedLayer
 from convnet.softmax_layer import SoftmaxLayer
 from data_provider import DataProvider
 
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 
 if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayer(32, (128, 4), 0, weight_scale=0.044, padding_mode=False),
+    neural_net = ConvNN([ConvLayer(32, (128, 4), weight_scale=0.044, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 4)),
 
-                         ConvLayer(32, (32, 4), 0, weight_scale=0.088, padding_mode=False),
+                         ConvLayer(32, (32, 4), weight_scale=0.088, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayer(32, (32, 4), 0, weight_scale=0.088, padding_mode=False),
+                         ConvLayer(32, (32, 4), weight_scale=0.088, padding_mode=False),
                          ActivationLayer('leakyReLU'),
                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(32, 0, weight_scale=0.125),
+                         FullyConnectedLayer(32, weight_scale=0.125),
                          ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(32, 0, weight_scale=0.125),
+                         FullyConnectedLayer(32, weight_scale=0.125),
                          ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(6, 0, weight_scale=0.17),
+                         FullyConnectedLayer(6, weight_scale=0.17),
                          SoftmaxLayer()],
                         DataProvider(8, num_genres=6, batch_mode=False))
 

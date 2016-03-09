@@ -32,7 +32,7 @@ if __name__ == '__main__':
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(6, weight_scale=0.17),
                          SoftmaxLayer()],
-                        DataProvider(8, num_genres=6, batch_mode=False))
+                        DataProvider(num_genres=6))
 
     neural_net.setup_layers((128, 599), (6, ))
     neural_net.init_params_from_file()

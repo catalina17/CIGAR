@@ -76,7 +76,6 @@ class ConvNN(object):
 
                     # Backpropagation phase
                     predicted_output = current_input
-
                     current_gradient = self._layers[-1].initial_gradient(predicted_output,
                                                                          training_example['out'])
                     for layer in reversed(self._layers[:-1]):

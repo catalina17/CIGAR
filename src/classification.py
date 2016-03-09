@@ -29,7 +29,7 @@ def ten_class():
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(10, weight_scale=0.17),
                          SoftmaxLayer()],
-                        DataProvider(20, num_genres=10, batch_mode=False))
+                        DataProvider(num_genres=10))
 
     neural_net.init_params_from_file(conv_only=True)
 
@@ -66,7 +66,7 @@ def eight_class():
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(8, weight_scale=0.17),
                          SoftmaxLayer()],
-                        DataProvider(16, num_genres=8, batch_mode=False))
+                        DataProvider(num_genres=8))
 
     neural_net.init_params_from_file(conv_only=True)
 
@@ -103,7 +103,7 @@ def six_class():
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(6, weight_scale=0.17),
                          SoftmaxLayer()],
-                        DataProvider(12, num_genres=6, batch_mode=False))
+                        DataProvider(num_genres=6))
 
     time1 = time.time()
     neural_net.train(learning_rate=0.005, num_iters=80, lrate_schedule=True)
@@ -138,7 +138,7 @@ def four_class(iter_idx):
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(4, weight_scale=0.17),
                          SoftmaxLayer()],
-                        DataProvider(8, num_genres=4, batch_mode=False))
+                        DataProvider(num_genres=4))
 
     neural_net.setup_layers((128, 599), (4, ))
 
@@ -174,7 +174,7 @@ def two_class(iter_idx):
                          ActivationLayer('leakyReLU'),
                          FullyConnectedLayer(2, weight_scale=0.1),
                          SoftmaxLayer()],
-                        DataProvider(4, num_genres=2, batch_mode=False))
+                        DataProvider(num_genres=2))
 
     time1 = time.time()
     neural_net.train(learning_rate=0.005, num_iters=40, lrate_schedule=True)

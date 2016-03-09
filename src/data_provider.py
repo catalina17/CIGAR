@@ -6,20 +6,16 @@ from scipy.misc import imread
 
 class DataProvider(object):
 
-    def __init__(self, batch_size, num_genres, genre_dataset_size=100, batch_mode=False):
+    def __init__(self, num_genres, genre_dataset_size=100):
         """
 
         Parameters
         ----------
-        batch_size : int
         num_genres : int
         genre_dataset_size : int
-        batch_mode : bool
 
         """
-        self._batch_size = batch_size
         self._genre_dataset_size = genre_dataset_size
-        self._batch_mode = batch_mode
 
         self._num_genres = num_genres
         self._genres = ['classical', 'metal', 'blues', 'disco', 'hiphop', 'reggae', 'country',
@@ -65,11 +61,8 @@ class DataProvider(object):
         return (self._num_genres,)
 
     def setup(self):
-        if self._batch_mode:
-            self._train_set = np.empty(self._genre_dataset_size * 18 / 10, dtype=dict)
-        else:
-            self._train_set = np.empty((self._num_genres, self._genre_dataset_size * 9 / 10),
-                                       dtype=dict)
+        self._train_set = np.empty((self._num_genres, self._genre_dataset_size * 9 / 10),
+                                   dtype=dict)
         self._test_set = np.empty((self._num_genres, self._genre_dataset_size / 10), dtype=dict)
 
         train_count = 0
@@ -84,32 +77,16 @@ class DataProvider(object):
                     self._test_set[igenre, test_count] = self._get_next_example(genre, i)
                     test_count += 1
                 else:
-                    if self._batch_mode:
-                        self._train_set[train_count] = self._get_next_example(genre, i)
-                    else:
-                        self._train_set[igenre, train_count] = self._get_next_example(genre, i)
+                    self._train_set[igenre, train_count] = self._get_next_example(genre, i)
                     train_count += 1
 
-            if not self._batch_mode:
-                np.random.shuffle(self._train_set[igenre])
-                train_count = 0
-
-        if self._batch_mode:
-            np.random.shuffle(self._train_set)
+            np.random.shuffle(self._train_set[igenre])
+            train_count = 0
 
     def get_next_batch(self):
-        if self._batch_mode:
-            if self._current_batch_start_index < self._genre_dataset_size * 18 / 10:
-                batch = self._train_set[self._current_batch_start_index:
-                                       self._current_batch_start_index + self._batch_size]
-                self._current_batch_start_index += self._batch_size
-                return batch
-            else:
-                return None
-
         if self._current_batch_start_index < self._genre_dataset_size * 9 / 10:
-            batch = np.empty(self._batch_size, dtype=dict)
-            subbatch_size = self._batch_size / self._num_genres
+            batch = np.empty(self._num_genres * 2, dtype=dict)
+            subbatch_size = 2
 
             for i in range(self._num_genres):
                 batch[subbatch_size * i:subbatch_size * (i + 1)] = \
@@ -135,11 +112,8 @@ class DataProvider(object):
     def reset(self):
         self._current_batch_start_index = 0
 
-        if self._batch_mode:
-            np.random.shuffle(self._train_set)
-        else:
-            for i in range(self._num_genres):
-                np.random.shuffle(self._train_set[i, :])
+        for i in range(self._num_genres):
+            np.random.shuffle(self._train_set[i, :])
 
     def _get_next_example(self, genre, id):
         """
@@ -168,7 +142,7 @@ class DataProvider(object):
         return dict(spec=im_gray, out=output, id=id)
 
 if __name__ == '__main__':
-    data_provider = DataProvider(10, num_genres=4, batch_mode=False)
+    data_provider = DataProvider(num_genres=4)
     data_provider.setup()
 
     a = data_provider.get_all_training_data()

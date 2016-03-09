@@ -19,16 +19,16 @@ class ActivationLayerCUDA(ActivationLayer):
         super(ActivationLayerCUDA, self).__init__(activation_fn)
 
     def forward_prop(self, input):
-        assert self.input_shape == input.shape, "Input does not have correct shape"
-        self.current_input = input
+        assert self._input_shape == input.shape, "Input does not have correct shape"
+        self._current_input = input
 
         h = None
         w = None
-        if len(self.input_shape) == 1:
+        if len(self._input_shape) == 1:
             h = 1
-            w = self.input_shape[0]
+            w = self._input_shape[0]
         else:
-            h, w = self.input_shape
+            h, w = self._input_shape
 
         mod = SourceModule("""
             #define INPUT_HEIGHT """ + str(h) + """
@@ -49,7 +49,7 @@ class ActivationLayerCUDA(ActivationLayer):
             """)
 
         fwd_leakyrelu = mod.get_function('fwd_leakyrelu')
-        output = np.empty(self.input_shape).astype(np.float32)
+        output = np.empty(self._input_shape).astype(np.float32)
         fwd_leakyrelu(driver.In(input.astype(np.float32)),
                       driver.Out(output),
                       block=(8, 4, 1), grid=(w / 8 + 1, h / 4 + 1, 1))
@@ -59,11 +59,11 @@ class ActivationLayerCUDA(ActivationLayer):
     def back_prop(self, output_grad):
         h = None
         w = None
-        if len(self.input_shape) == 1:
+        if len(self._input_shape) == 1:
             h = 1
-            w = self.input_shape[0]
+            w = self._input_shape[0]
         else:
-            h, w = self.input_shape
+            h, w = self._input_shape
 
         mod = SourceModule("""
             #define INPUT_HEIGHT """ + str(h) + """
@@ -84,10 +84,10 @@ class ActivationLayerCUDA(ActivationLayer):
             """)
 
         backprop_leakyrelu = mod.get_function('backprop_leakyrelu')
-        input_grad = np.empty(self.input_shape).astype(np.float32)
+        input_grad = np.empty(self._input_shape).astype(np.float32)
         backprop_leakyrelu(driver.In(output_grad.astype(np.float32)),
                            driver.Out(input_grad),
-                           driver.In(self.current_input.astype(np.float32)),
+                           driver.In(self._current_input.astype(np.float32)),
                            block=(8, 4, 1), grid=(w / 8 + 1, h / 4 + 1, 1))
 
         return input_grad
@@ -99,18 +99,18 @@ class ActivationLayerCUDA(ActivationLayer):
         return super(ActivationLayerCUDA, self).get_output_shape()
 
 if __name__ == '__main__':
-    dummy_input = np.random.randn(8, 8)
+    dummy_input = np.random.randn(64, 596)
     print "Input:\n", dummy_input
 
     layer = ActivationLayerCUDA('leakyReLU')
-    layer.set_input_shape((8, 8))
+    layer.set_input_shape((64, 596))
 
     start = time.time()
     print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
     finish = time.time()
     print "Fwd prop - Time taken: ", finish - start
 
-    dummy_output_grad = np.ones((8, 8))
+    dummy_output_grad = np.ones((64, 596))
     print "Output gradient:\n", dummy_output_grad
 
     start = time.time()

@@ -5,7 +5,7 @@ import numpy as np
 class SoftmaxLayer(Layer):
 
     def __init__(self):
-        self.num_nodes = None
+        self._num_nodes = None
 
     def forward_prop(self, input):
         input -= np.amax(input)
@@ -13,7 +13,7 @@ class SoftmaxLayer(Layer):
         return exp / np.sum(exp)
 
     def back_prop(self, output_grad):
-        raise NotImplementedError("Output (Softmax) layer - does not perform backpropagation")
+        raise NotImplementedError("Output layer -- no backpropagation")
 
     def initial_gradient(self, predicted_output, true_output):
         return predicted_output - true_output
@@ -30,7 +30,7 @@ class SoftmaxLayer(Layer):
 
         """
         assert len(shape) == 1, "Input shape not suitable for output (Softmax) layer"
-        self.num_nodes = shape[0]
+        self._num_nodes = shape[0]
         # print "SoftmaxLayer with input shape " + str(shape)
 
     def get_output_shape(self):
@@ -41,7 +41,7 @@ class SoftmaxLayer(Layer):
         tuple
 
         """
-        shape = (self.num_nodes, )
+        shape = (self._num_nodes,)
         # print "SoftmaxLayer with output shape " + str(shape)
         return shape
 

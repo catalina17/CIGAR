@@ -6,43 +6,43 @@ import time
 class GlobalPoolingLayer(Layer):
 
     def __init__(self):
-        self.input_shape = None
-        self.current_input = None
-        self.max_activation_indices = None
+        self._input_shape = None
+        self._current_input = None
+        self._max_activation_indices = None
 
     def forward_prop(self, input):
-        assert self.input_shape == input.shape, "Input does not have correct shape"
-        self.current_input = input
+        assert self._input_shape == input.shape, "Input does not have correct shape"
+        self._current_input = input
 
         output = np.empty(self.get_output_shape())
-        self.max_activation_indices = np.empty(self.get_output_shape())
+        self._max_activation_indices = np.empty(self.get_output_shape())
 
-        for f in range(self.input_shape[0]):
+        for f in range(self._input_shape[0]):
             # Average pooling
             output[f] = np.mean(input[f])
             # Max pooling
-            output[self.input_shape[0] + f] = np.max(input[f])
-            self.max_activation_indices[f] = np.argmax(input[f])
+            output[self._input_shape[0] + f] = np.max(input[f])
+            self._max_activation_indices[f] = np.argmax(input[f])
             # L2-norm pooling
-            output[2 * self.input_shape[0] + f] = np.sqrt(np.sum(input[f] ** 2))
+            output[2 * self._input_shape[0] + f] = np.sqrt(np.sum(input[f] ** 2))
         return output
 
     def back_prop(self, output_grad):
-        mean_output_grad = output_grad[0:self.input_shape[0]]
-        max_output_grad = output_grad[self.input_shape[0]:2 * self.input_shape[0]]
-        l2_output_grad = output_grad[2 * self.input_shape[0]:]
+        mean_output_grad = output_grad[0:self._input_shape[0]]
+        max_output_grad = output_grad[self._input_shape[0]:2 * self._input_shape[0]]
+        l2_output_grad = output_grad[2 * self._input_shape[0]:]
 
-        input_grad = np.empty(self.input_shape)
-        range_f = self.input_shape[0]
+        input_grad = np.empty(self._input_shape)
+        range_f = self._input_shape[0]
         for f in range(range_f):
             # Average grad
-            input_grad[f] = mean_output_grad[f] / self.input_shape[1]
+            input_grad[f] = mean_output_grad[f] / self._input_shape[1]
             # Max grad
-            input_grad[f, self.max_activation_indices[f]] += max_output_grad[f]
+            input_grad[f, self._max_activation_indices[f]] += max_output_grad[f]
             # L2-norm grad
-            sqr_root = np.sqrt(np.sum(self.current_input[f] ** 2))
+            sqr_root = np.sqrt(np.sum(self._current_input[f] ** 2))
             if sqr_root >= 1e-5:
-                input_grad[f] += self.current_input[f] / sqr_root * l2_output_grad[f]
+                input_grad[f] += self._current_input[f] / sqr_root * l2_output_grad[f]
 
         return input_grad
 
@@ -54,7 +54,7 @@ class GlobalPoolingLayer(Layer):
         shape : tuple
 
         """
-        self.input_shape = shape
+        self._input_shape = shape
         # print "GlobalPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
@@ -65,12 +65,12 @@ class GlobalPoolingLayer(Layer):
         tuple
 
         """
-        shape = (3 * self.input_shape[0], )
+        shape = (3 * self._input_shape[0],)
         # print "GlobalPoolingLayer with output shape " + str(shape)
         return shape
 
 if __name__ == '__main__':
-    dummy_input = np.ones((64, 70))
+    dummy_input = np.ones((32, 70))
     # print "Input:\n", dummy_input
 
     layer = GlobalPoolingLayer()

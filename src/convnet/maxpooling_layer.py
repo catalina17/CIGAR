@@ -4,6 +4,7 @@ import time
 
 
 class MaxPoolingLayer(Layer):
+
     def __init__(self, filter_shape):
         """
 
@@ -12,27 +13,27 @@ class MaxPoolingLayer(Layer):
         filter_shape : tuple
 
         """
-        self.filter_shape = filter_shape
+        self._filter_shape = filter_shape
         print "Filter shape: " + str(filter_shape)
-        self.input_shape = None
-        self.current_input = None
-        self.max_activation_indices = None
+        self._input_shape = None
+        self._current_input = None
+        self._max_activation_indices = None
 
     def forward_prop(self, input):
-        assert self.input_shape == input.shape, "Input does not have correct shape"
-        self.current_input = input
+        assert self._input_shape == input.shape, "Input does not have correct shape"
+        self._current_input = input
 
         if (len(self.get_output_shape()) == 1):
             output = np.empty((1, self.get_output_shape()[0]))
         else:
             output = np.empty(self.get_output_shape())
 
-        self.max_activation_indices = np.empty(self.get_output_shape() + (2,))
+        self._max_activation_indices = np.empty(self.get_output_shape() + (2,))
 
-        filter_h = self.filter_shape[0]
-        filter_w = self.filter_shape[1]
-        input_h = self.input_shape[0]
-        input_w = self.input_shape[1]
+        filter_h = self._filter_shape[0]
+        filter_w = self._filter_shape[1]
+        input_h = self._input_shape[0]
+        input_w = self._input_shape[1]
 
         range_i = input_h/filter_h
         range_j = input_w/filter_w
@@ -52,8 +53,8 @@ class MaxPoolingLayer(Layer):
                             w_max = w
                             max_val = input[h, w]
                 output[i, j] = max_val
-                self.max_activation_indices[i, j, 0] = h_max
-                self.max_activation_indices[i, j, 1] = w_max
+                self._max_activation_indices[i, j, 0] = h_max
+                self._max_activation_indices[i, j, 1] = w_max
 
         if output.shape[0] == 1:
             return output[0]
@@ -61,12 +62,12 @@ class MaxPoolingLayer(Layer):
             return output
 
     def back_prop(self, output_grad):
-        input_grad = np.zeros(self.input_shape)
+        input_grad = np.zeros(self._input_shape)
 
         for i in range(output_grad.shape[0]):
             for j in range(output_grad.shape[1]):
-                h = self.max_activation_indices[i, j, 0]
-                w = self.max_activation_indices[i, j, 1]
+                h = self._max_activation_indices[i, j, 0]
+                w = self._max_activation_indices[i, j, 1]
                 input_grad[h, w] = output_grad[i, j]
 
         return input_grad
@@ -79,7 +80,7 @@ class MaxPoolingLayer(Layer):
         shape : tuple
 
         """
-        self.input_shape = shape
+        self._input_shape = shape
         # print "MaxPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
@@ -90,17 +91,17 @@ class MaxPoolingLayer(Layer):
         tuple
 
         """
-        assert self.input_shape[0] % self.filter_shape[0] == 0 and\
-            self.input_shape[1] % self.filter_shape[1] == 0,\
+        assert self._input_shape[0] % self._filter_shape[0] == 0 and \
+               self._input_shape[1] % self._filter_shape[1] == 0,\
             "Input shape is not a multiple of filter shape in MaxPoolingLayer"
 
         shape = None
 
-        if self.input_shape[0] / self.filter_shape[0] == 1:
-            shape = (self.input_shape[1] / self.filter_shape[1], )
+        if self._input_shape[0] / self._filter_shape[0] == 1:
+            shape = (self._input_shape[1] / self._filter_shape[1],)
         else:
-            shape = (self.input_shape[0] / self.filter_shape[0],
-                     self.input_shape[1] / self.filter_shape[1])
+            shape = (self._input_shape[0] / self._filter_shape[0],
+                     self._input_shape[1] / self._filter_shape[1])
 
         # print "MaxPoolingLayer with output shape " + str(shape)
         return shape

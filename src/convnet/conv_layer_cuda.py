@@ -9,30 +9,29 @@ import time
 
 class ConvLayerCUDA(ConvLayer):
 
-    def __init__(self, num_filters, filter_shape, weight_decay, weight_scale, padding_mode=True):
+    def __init__(self, num_filters, filter_shape, weight_scale, padding_mode=True):
         mod = SourceModule("""
             __global__ void multiply_them(float *dest, float *a, float *b) {
                 const int i = threadIdx.x;
                 dest[i] = a[i] * b[i];
             }
             """)
-        super(ConvLayerCUDA, self).__init__(num_filters, filter_shape, weight_decay, weight_scale,
-                                            padding_mode)
+        super(ConvLayerCUDA, self).__init__(num_filters, filter_shape, weight_scale, padding_mode)
 
     def forward_prop(self, input):
-        assert self.input_shape == input.shape, "Input does not have correct shape"
+        assert self._input_shape == input.shape, "Input does not have correct shape"
 
-        padded_input = np.zeros((self.input_shape[0],
-                                 self.input_shape[1] + self.num_padding_zeros)).astype(np.double)
-        padded_input[:, self.num_padding_zeros / 2:
-                        self.num_padding_zeros / 2 + self.input_shape[1]] = input
-        self.current_padded_input = padded_input
+        padded_input = np.zeros((self._input_shape[0],
+                                 self._input_shape[1] + self._num_padding_zeros)).astype(np.double)
+        padded_input[:, self._num_padding_zeros / 2:
+                        self._num_padding_zeros / 2 + self._input_shape[1]] = input
+        self._current_padded_input = padded_input
 
         output = np.empty(self.get_output_shape()).astype(np.double)
 
         mod = SourceModule("""
-            #define INPUT_WIDTH """ + str(self.input_shape[1]) + """
-            #define FILTER_AREA """ + str(self.filter_shape[0] * self.filter_shape[1]) + """
+            #define INPUT_WIDTH """ + str(self._input_shape[1]) + """
+            #define FILTER_AREA """ + str(self._filter_shape[0] * self._filter_shape[1]) + """
 
             __global__ void conv_fwd_prop(double *in, double *f_weights, double *biases,
                                           double *out) {
@@ -52,22 +51,22 @@ class ConvLayerCUDA(ConvLayer):
             }
             """)
         conv_fwd_prop = mod.get_function('conv_fwd_prop')
-        conv_fwd_prop(driver.In(padded_input), driver.In(self.filter_weights),
-                      driver.In(self.biases), driver.InOut(output),
-                      block=(self.filter_shape[1], self.filter_shape[0], 1),
-                      grid=(self.get_output_shape()[1], self.num_filters, 1))
+        conv_fwd_prop(driver.In(padded_input), driver.In(self._filter_weights),
+                      driver.In(self._biases), driver.InOut(output),
+                      block=(self._filter_shape[1], self._filter_shape[0], 1),
+                      grid=(self.get_output_shape()[1], self._num_filters, 1))
 
         return output
 
     def back_prop(self, output_grad):
-        padded_input_grad = np.zeros((self.input_shape[0],
-                                      self.input_shape[1] + self.num_padding_zeros)).\
+        padded_input_grad = np.zeros((self._input_shape[0],
+                                      self._input_shape[1] + self._num_padding_zeros)).\
             astype(np.double)
 
         mod1 = SourceModule("""
-            #define FILTER_HEIGHT """ + str(self.filter_shape[0]) + """
-            #define FILTER_WIDTH """ + str(self.filter_shape[1]) + """
-            #define NUM_FILTERS """ + str(self.num_filters) + """
+            #define FILTER_HEIGHT """ + str(self._filter_shape[0]) + """
+            #define FILTER_WIDTH """ + str(self._filter_shape[1]) + """
+            #define NUM_FILTERS """ + str(self._num_filters) + """
             #define OUT_WIDTH """ + str(self.get_output_shape()[1]) + """
 
             __global__ void compute_in_grad(double *out_grad, double *in, double *f_weights,
@@ -97,17 +96,17 @@ class ConvLayerCUDA(ConvLayer):
             """)
         compute_in_grad = mod1.get_function('compute_in_grad')
         compute_in_grad(driver.In(output_grad.astype(np.double)),
-                        driver.In(self.current_padded_input),
-                        driver.In(self.filter_weights),
+                        driver.In(self._current_padded_input),
+                        driver.In(self._filter_weights),
                         driver.InOut(padded_input_grad),
-                        block=(self.filter_shape[1], self.num_filters, 1),
+                        block=(self._filter_shape[1], self._num_filters, 1),
                         grid=(padded_input_grad.shape[1], padded_input_grad.shape[0], 1))
 
         mod2 = SourceModule("""
             #define OUT_WIDTH """ + str(self.get_output_shape()[1]) + """
-            #define IN_WIDTH """ + str(self.input_shape[1]) + """
-            #define FILTER_HEIGHT """ + str(self.filter_shape[0]) + """
-            #define FILTER_WIDTH """ + str(self.filter_shape[1]) + """
+            #define IN_WIDTH """ + str(self._input_shape[1]) + """
+            #define FILTER_HEIGHT """ + str(self._filter_shape[0]) + """
+            #define FILTER_WIDTH """ + str(self._filter_shape[1]) + """
 
             __global__ void compute_derivatives(double *out_grad, double *in, double *d_f_weights,
                                                 double *d_biases) {
@@ -133,13 +132,13 @@ class ConvLayerCUDA(ConvLayer):
             """)
         compute_derivatives = mod2.get_function('compute_derivatives')
         compute_derivatives(driver.In(output_grad.astype(np.double)),
-                            driver.In(self.current_padded_input),
-                            driver.InOut(self.d_filter_weights), driver.InOut(self.d_biases),
-                            block=(self.filter_shape[1], self.filter_shape[0], 1),
-                            grid=(self.num_filters, 1, 1))
+                            driver.In(self._current_padded_input),
+                            driver.InOut(self._d_filter_weights), driver.InOut(self._d_biases),
+                            block=(self._filter_shape[1], self._filter_shape[0], 1),
+                            grid=(self._num_filters, 1, 1))
 
-        return padded_input_grad[:, self.num_padding_zeros / 2:self.input_shape[1] +
-                                                               self.num_padding_zeros / 2]
+        return padded_input_grad[:, self._num_padding_zeros / 2:self._input_shape[1] +
+                                                                self._num_padding_zeros / 2]
 
     def set_input_shape(self, shape):
         super(ConvLayerCUDA, self).set_input_shape(shape)
@@ -160,7 +159,7 @@ if __name__ == '__main__':
     dummy_input = np.ones((128, 599))
     # print "Input:\n", dummy_input
 
-    layer = ConvLayerCUDA(num_filters=32, filter_shape=(128, 4), weight_decay=0, weight_scale=0.01,
+    layer = ConvLayerCUDA(num_filters=32, filter_shape=(128, 4), weight_scale=0.01,
                           padding_mode=False)
     layer.set_input_shape((128, 599))
 

@@ -19,21 +19,21 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
         super(MaxPoolingLayerCUDA, self).__init__(filter_shape)
 
     def forward_prop(self, input):
-        assert self.input_shape == input.shape, "Input does not have correct shape"
-        self.current_input = input
+        assert self._input_shape == input.shape, "Input does not have correct shape"
+        self._current_input = input
 
         if (len(self.get_output_shape()) == 1):
             output = np.empty((1, self.get_output_shape()[0])).astype(np.double)
         else:
             output = np.empty(self.get_output_shape()).astype(np.double)
 
-        self.max_activation_indices = np.empty(self.get_output_shape()).astype(np.int32)
+        self._max_activation_indices = np.empty(self.get_output_shape()).astype(np.int32)
 
         mod = None
-        if self.filter_shape[1] == 4:
+        if self._filter_shape[1] == 4:
             mod = SourceModule("""
-                #define INPUT_HEIGHT """ + str(self.input_shape[0]) + """
-                #define INPUT_WIDTH """ + str(self.input_shape[1] / 4) + """
+                #define INPUT_HEIGHT """ + str(self._input_shape[0]) + """
+                #define INPUT_WIDTH """ + str(self._input_shape[1] / 4) + """
 
                 __global__ void max_pool(double4 *in, double *dest, int *max_idx_w) {
                     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -68,10 +68,10 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                     max_idx_w[idx] = max_idx;
                 }
                 """)
-        elif self.filter_shape[1] == 2:
+        elif self._filter_shape[1] == 2:
             mod = SourceModule("""
-                #define INPUT_HEIGHT """ + str(self.input_shape[0]) + """
-                #define INPUT_WIDTH """ + str(self.input_shape[1] / 2) + """
+                #define INPUT_HEIGHT """ + str(self._input_shape[0]) + """
+                #define INPUT_WIDTH """ + str(self._input_shape[1] / 2) + """
 
                 __global__ void max_pool(double2 *in, double *dest, int *max_idx_w) {
                     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -97,18 +97,18 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
 
         max_pool = mod.get_function('max_pool')
         max_pool(driver.In(input.astype(np.double)), driver.Out(output),
-                 driver.Out(self.max_activation_indices), block=(self.filter_shape[1], 1, 1),
+                 driver.Out(self._max_activation_indices), block=(self._filter_shape[1], 1, 1),
                  grid=(self.get_output_shape()[1], self.get_output_shape()[0], 1))
 
         # print "OUT", output
-        # print "Idx", self.max_activation_indices
+        # print "Idx", self._max_activation_indices
         if output.shape[0] == 1:
             return output[0]
         else:
             return output
 
     def back_prop(self, output_grad):
-        input_grad = np.zeros(self.input_shape).astype(np.double)
+        input_grad = np.zeros(self._input_shape).astype(np.double)
 
         mod = SourceModule("""
             #define INGRAD_WIDTH """ + str(input_grad.shape[1]) + """
@@ -127,7 +127,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
 
         max_pool_back = mod.get_function('max_pool_back')
         max_pool_back(driver.In(output_grad.astype(np.double)), driver.InOut(input_grad),
-                      driver.In(self.max_activation_indices),
+                      driver.In(self._max_activation_indices),
                       block=(8, 4, 1),
                       grid=(output_grad.shape[1] / 8, output_grad.shape[0] / 4, 1))
 

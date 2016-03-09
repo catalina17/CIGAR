@@ -15,8 +15,8 @@ class ConvNN(object):
         data_provider : DataProvider
 
         """
-        self.layers = layers
-        self.data_provider = data_provider
+        self._layers = layers
+        self._data_provider = data_provider
         self.results = None
 
     def setup_layers(self, cnn_input_shape, cnn_output_shape):
@@ -30,7 +30,7 @@ class ConvNN(object):
         """
         current_shape = cnn_input_shape
         print "OUTPUT shapes:"
-        for layer in self.layers:
+        for layer in self._layers:
             layer.set_input_shape(current_shape)
             current_shape = layer.get_output_shape()
             print layer.__class__.__name__, current_shape
@@ -51,37 +51,39 @@ class ConvNN(object):
         lrate_schedule : bool
 
         """
-        self.results = dict(test=0.0, train=0.0, test_loss=0.0, train_loss=0.0)
+        self.results = dict(test=0.0, train=0.0, test_loss=0.0, train_loss=0.0,
+                            conf_matrix=np.zeros((self._data_provider.get_output_shape()[0],
+                                                  self._data_provider.get_output_shape()[0])))
 
         # Initialise layers with corresponding input/output dimensions
-        self.setup_layers(self.data_provider.get_input_shape(),
-                          self.data_provider.get_output_shape())
-        self.data_provider.setup()
+        self.setup_layers(self._data_provider.get_input_shape(),
+                          self._data_provider.get_output_shape())
+        self._data_provider.setup()
 
         for it in range(num_iters):
             print "ConvNN training: iteration #" + str(it + 1)
 
-            self.data_provider.reset()
-            batch = self.data_provider.get_next_batch()
+            self._data_provider.reset()
+            batch = self._data_provider.get_next_batch()
 
             # If available, use the next batch of training examples to train network
             while not(batch is None):
                 for training_example in batch:
                     # Forward propagation phase -- calculate output for training example
                     current_input = training_example['spec']
-                    for layer in self.layers:
+                    for layer in self._layers:
                         current_input = layer.forward_prop(current_input)
 
                     # Backpropagation phase
                     predicted_output = current_input
 
-                    current_gradient = self.layers[-1].initial_gradient(predicted_output,
-                                                                        training_example['out'])
-                    for layer in reversed(self.layers[:-1]):
+                    current_gradient = self._layers[-1].initial_gradient(predicted_output,
+                                                                         training_example['out'])
+                    for layer in reversed(self._layers[:-1]):
                         current_gradient = layer.back_prop(current_gradient)
 
                     # Update parameters - online mode
-                    for layer in self.layers:
+                    for layer in self._layers:
                         if type(layer) in [ConvLayer, FullyConnectedLayer]:
                             if lrate_schedule:
                                 layer.update_parameters(learning_rate * (num_iters - it + 1.0) /
@@ -89,26 +91,26 @@ class ConvNN(object):
                             else:
                                 layer.update_parameters(learning_rate)
 
-                batch = self.data_provider.get_next_batch()
+                batch = self._data_provider.get_next_batch()
 
-        all_training_data = self.data_provider.get_all_training_data()
-        self.error_and_loss(all_training_data)
-        self.test()
+        self._record_training_stats()
+        self._record_test_stats()
 
-    def error_and_loss(self, batch):
+    def _record_training_stats(self):
+        batch = self._data_provider.get_all_training_data()
         error = 0.0
         loss = 0.0
 
         for training_example in batch:
             current_input = training_example['spec']
-            for layer in self.layers:
+            for layer in self._layers:
                 current_input = layer.forward_prop(current_input)
 
             # print "Predicted output: ", current_input, "- True output: ", training_example['out']
 
             if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
-            loss += self.layers[-1].loss(current_input, training_example['out'])
+            loss += self._layers[-1].loss(current_input, training_example['out'])
 
         print "\nTraining error:\n", error / batch.shape[0]
         print "\nTraining loss:\n", loss / batch.shape[0]
@@ -116,42 +118,15 @@ class ConvNN(object):
         self.results['train'] = error / batch.shape[0]
         self.results['train_loss'] = loss / batch.shape[0]
 
-    def error(self, batch):
-        error = 0.0
-
-        for training_example in batch:
-            current_input = training_example['spec']
-            for layer in self.layers:
-                current_input = layer.forward_prop(current_input)
-
-            if np.argmax(current_input) != np.argmax(training_example['out']):
-                error += 1.0
-
-        print error
-        error /= batch.shape[0]
-        return error
-
-    def training_loss(self, training_batch):
-        loss = 0.0
-
-        for training_example in training_batch:
-            current_input = training_example['spec']
-            for layer in self.layers:
-                current_input = layer.forward_prop(current_input)
-
-            loss += self.layers[-1].loss(current_input, training_example['out'])
-
-        loss /= training_batch.shape[0]
-        return loss
-
-    def test(self):
-        test_data = self.data_provider.get_test_data()
+    def _record_test_stats(self):
+        test_data = self._data_provider.get_test_data()
         test_error = 0.0
         test_loss = 0.0
 
         for test_example in test_data:
             output = self.predict(test_example['spec'])
             print "Actual ", str(np.argmax(test_example['out']))
+            self.results['conf_matrix'][np.argmax(test_example['out'])][np.argmax(output)] += 1
 
             test_loss += -np.sum(test_example['out'] * np.log(output / np.sum(output)))
             if np.argmax(output) != np.argmax(test_example['out']):
@@ -177,7 +152,7 @@ class ConvNN(object):
         """
         # Forward propagation
         current_input = input
-        for layer in self.layers:
+        for layer in self._layers:
             current_input = layer.forward_prop(current_input)
 
         # Compute predicted output
@@ -187,7 +162,7 @@ class ConvNN(object):
     def serialise_params(self):
         count = 0
 
-        for layer in self.layers:
+        for layer in self._layers:
             if type(layer) in [ConvLayer, FullyConnectedLayer]:
                 count += 1
                 layer.serialise_parameters(count)
@@ -195,7 +170,7 @@ class ConvNN(object):
     def init_params_from_file(self, conv_only=False):
         count = 0
 
-        for layer in self.layers:
+        for layer in self._layers:
             if conv_only:
                 if type(layer) == ConvLayer:
                     count += 1
@@ -207,8 +182,8 @@ class ConvNN(object):
                     layer.init_parameters_from_file(count)
 
     def test_data_activations_for_conv_layer(self, layer_id, genre):
-        self.data_provider.setup()
-        test_data = self.data_provider.get_test_data_for_genre(genre)
+        self._data_provider.setup()
+        test_data = self._data_provider.get_test_data_for_genre(genre)
         activations_for_test_data = np.empty(test_data.shape, dtype=dict)
 
         example_count = -1
@@ -217,7 +192,7 @@ class ConvNN(object):
             example_count += 1
 
             current_input = example['spec']
-            for layer in self.layers:
+            for layer in self._layers:
                 current_input = layer.forward_prop(current_input)
                 if type(layer) == ConvLayer:
                     count += 1

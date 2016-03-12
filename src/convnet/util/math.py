@@ -10,14 +10,6 @@ def d_sigmoid(x):
     return s * (1 - s)
 
 
-def softplus(x):
-    return np.log(1 + np.exp(x))
-
-
-def d_softplus(x):
-    return sigmoid(x)
-
-
 def relu(x):
     return np.maximum(0, x)
 

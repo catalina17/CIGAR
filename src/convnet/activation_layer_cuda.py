@@ -35,7 +35,7 @@ class ActivationLayerCUDA(ActivationLayer):
             #define INPUT_HEIGHT """ + str(h) + """
             #define INPUT_WIDTH """ + str(w) + """
 
-            __global__ void fwd_leakyrelu(float *in, float *out) {
+            __global__ void fwd_leakyrelu(double *in, double *out) {
                 int col = blockIdx.x * blockDim.x + threadIdx.x;
                 int row = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -44,14 +44,15 @@ class ActivationLayerCUDA(ActivationLayer):
 
                 int idx = col + row * INPUT_WIDTH;
                 out[idx] = in[idx];
-                if (in[idx] <= 0.0)
+                if (in[idx] <= 0.0) {
                     out[idx] *= 0.01;
+                }
             }
             """)
 
         fwd_leakyrelu = mod.get_function('fwd_leakyrelu')
-        output = np.empty(self._input_shape).astype(np.float32)
-        fwd_leakyrelu(driver.In(input.astype(np.float32)),
+        output = np.empty(self._input_shape).astype(np.float64)
+        fwd_leakyrelu(driver.In(input.astype(np.float64)),
                       driver.Out(output),
                       block=(8, 4, 1), grid=(w / 8 + 1, h / 4 + 1, 1))
 
@@ -70,7 +71,7 @@ class ActivationLayerCUDA(ActivationLayer):
             #define INPUT_HEIGHT """ + str(h) + """
             #define INPUT_WIDTH """ + str(w) + """
 
-            __global__ void backprop_leakyrelu(float *grad_out, float *grad_in, float *in) {
+            __global__ void backprop_leakyrelu(double *grad_out, double *grad_in, double *in) {
                 int col = blockIdx.x * blockDim.x + threadIdx.x;
                 int row = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -85,10 +86,10 @@ class ActivationLayerCUDA(ActivationLayer):
             """)
 
         backprop_leakyrelu = mod.get_function('backprop_leakyrelu')
-        input_grad = np.empty(self._input_shape).astype(np.float32)
-        backprop_leakyrelu(driver.In(output_grad.astype(np.float32)),
+        input_grad = np.empty(self._input_shape).astype(np.float64)
+        backprop_leakyrelu(driver.In(output_grad.astype(np.float64)),
                            driver.Out(input_grad),
-                           driver.In(self._current_input.astype(np.float32)),
+                           driver.In(self._current_input.astype(np.float64)),
                            block=(8, 4, 1), grid=(w / 8 + 1, h / 4 + 1, 1))
 
         return input_grad

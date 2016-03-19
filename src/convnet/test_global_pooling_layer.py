@@ -21,6 +21,7 @@ class TestGlobalPoolingLayer(unittest.TestCase):
 
         output = self.layer.forward_prop(self.input)
         numpy.testing.assert_array_equal(output, expected_output)
+
         output = self.layer_cuda.forward_prop(self.input)
         numpy.testing.assert_array_equal(output, expected_output)
 
@@ -29,8 +30,10 @@ class TestGlobalPoolingLayer(unittest.TestCase):
         self.layer_cuda.forward_prop(self.input)
 
         out_grad = np.array([0.1, 0.2, 0.3, 0.2, 0.1, 0.2], dtype=np.float64)
-        expected_in_grad = np.array([[0.025 + 1, 0.025 + 1, 0.025 + 0.3 + 1, 0.025 + 1],
-                                     [0.05 + 20, 0.05 + 20, 0.05 + 20, 0.05 + 0.2 + 20]],
+        expected_in_grad = np.array([[0.025 - 0.5 * 0.1, 0.025 + 0.1 * 0.1, 0.025 + 0.3 + 0.7 * 0.1,
+                                      0.025 + 0.5 * 0.1],
+                                     [0.05 - 0.5 * 0.2, 0.05 - 0.1 * 0.2, 0.05 - 0.7 * 0.2,
+                                      0.05 + 0.2 + 0.5 * 0.2]],
                                     dtype=np.float64)
 
         in_grad = self.layer.back_prop(out_grad)

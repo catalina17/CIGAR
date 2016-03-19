@@ -15,13 +15,13 @@ class TestSoftmaxLayer(TestCase):
         input = np.array([43265, 0, 0, 43265], dtype=np.float64)
         output = self.layer.forward_prop(input)
         expected_output = np.array([0.5, 0, 0, 0.5], dtype=np.float64)
-        numpy.testing.assert_array_almost_equal(output, expected_output)
+        numpy.testing.assert_array_equal(output, expected_output)
 
     def test_forward_prop_one_large(self):
         input = np.array([43265, 2, 54, 21], dtype=np.float64)
         output = self.layer.forward_prop(input)
         expected_output = np.array([1, 0, 0, 0], dtype=np.float64)
-        numpy.testing.assert_array_almost_equal(output, expected_output)
+        numpy.testing.assert_array_equal(output, expected_output)
 
     def test_back_prop(self):
         out_grad = np.array([3, 3, 3, 3], dtype=np.float64)

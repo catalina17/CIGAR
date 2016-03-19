@@ -46,8 +46,8 @@ class TestFullyConnectedLayer(unittest.TestCase):
         numpy.testing.assert_array_equal(in_grad, expected_in_grad)
 
     def test_get_output_shape(self):
-        self.assertEqual(self.layer.get_output_shape(), 3)
-        self.assertEqual(self.layer_cuda.get_output_shape(), 3)
+        self.assertEqual(self.layer.get_output_shape(), (3, ))
+        self.assertEqual(self.layer_cuda.get_output_shape(), (3, ))
 
     def test_update_parameters(self):
         self.layer._weights = np.ones((4, 3), dtype=np.float64)

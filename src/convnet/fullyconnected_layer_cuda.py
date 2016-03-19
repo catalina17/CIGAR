@@ -21,13 +21,13 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
 
     def forward_prop(self, input):
         assert self._input_shape == input.shape, "Input does not have correct shape"
-        self._current_input = input.astype(np.float32)
+        self._current_input = input.astype(np.float64)
 
         mod = SourceModule("""
             #define INPUT_LENGTH """ + str(self._input_shape[0]) + """
 
-            __global__ void fwd_prop(float *in, float *weights, float *biases, float *out) {
-                __shared__ float temp[INPUT_LENGTH];
+            __global__ void fwd_prop(double *in, double *weights, double *biases, double *out) {
+                __shared__ double temp[INPUT_LENGTH];
                 temp[threadIdx.x] = in[threadIdx.x] *
                                     weights[gridDim.x * threadIdx.x + blockIdx.x];
 
@@ -43,22 +43,20 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
             """)
 
         fwd_prop = mod.get_function('fwd_prop')
-        output = np.zeros(self._num_nodes).astype(np.float32)
-        fwd_prop(driver.In(input.astype(np.float32)), driver.In(self._weights.astype(np.float32)),
-                 driver.In(self._biases.astype(np.float32)), driver.InOut(output),
+        output = np.zeros(self._num_nodes).astype(np.float64)
+        fwd_prop(driver.In(input.astype(np.float64)), driver.In(self._weights.astype(np.float64)),
+                 driver.In(self._biases.astype(np.float64)), driver.InOut(output),
                  block=(self._input_shape[0], 1, 1), grid=(self._num_nodes, 1, 1))
 
         return output
 
     def back_prop(self, output_grad):
-        # No weight decay
-
         mod = SourceModule("""
             #define OUTPUT_LENGTH """ + str(self._num_nodes) + """
 
-            __global__ void back_prop(float *out_grad, float *in_grad, float *d_weights,
-                                      float *d_biases, float *in, float *weights) {
-                __shared__ float temp[OUTPUT_LENGTH];
+            __global__ void back_prop(double *out_grad, double *in_grad, double *d_weights,
+                                      double *d_biases, double *in, double *weights) {
+                __shared__ double temp[OUTPUT_LENGTH];
                 temp[threadIdx.x] = out_grad[threadIdx.x] *
                                     weights[gridDim.x * threadIdx.x + blockIdx.x];
 
@@ -76,8 +74,8 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
             }
             """)
         back_prop = mod.get_function('back_prop')
-        input_grad = np.zeros(self._input_shape).astype(np.float32)
-        back_prop(driver.In(output_grad.astype(np.float32)),
+        input_grad = np.zeros(self._input_shape).astype(np.float64)
+        back_prop(driver.In(output_grad.astype(np.float64)),
                   driver.InOut(input_grad),
                   driver.InOut(self._d_weights),
                   driver.InOut(self._d_biases),
@@ -94,28 +92,7 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
         return super(FullyConnectedLayerCUDA, self).get_output_shape()
 
     def update_parameters(self, learning_rate):
-        mod = SourceModule("""
-            #define L_RATE """ + str(learning_rate) + """
-
-            __global__ void param_update(float *d_weights, float *d_biases, float *weights,
-                                         float *biases) {
-                if (!blockIdx.x) {
-                    biases[threadIdx.x] -= L_RATE * d_biases[threadIdx.x];
-                    d_biases[threadIdx.x] = 0.0;
-                }
-
-                int idx = blockIdx.x * blockDim.x + threadIdx.x;
-                weights[idx] -= L_RATE * d_weights[idx];
-                d_weights[idx] = 0.0;
-            }
-            """)
-
-        param_update = mod.get_function('param_update')
-        param_update(driver.InOut(self._d_weights),
-                     driver.InOut(self._d_biases),
-                     driver.InOut(self._weights),
-                     driver.InOut(self._biases),
-                     block=(self._num_nodes, 1, 1), grid=(self._input_shape[0], 1, 1))
+        super(FullyConnectedLayerCUDA, self).update_parameters(learning_rate)
 
     def serialise_parameters(self, file_idx):
         super(FullyConnectedLayerCUDA, self).serialise_parameters(file_idx)

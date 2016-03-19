@@ -16,8 +16,8 @@ class FullyConnectedLayer(Layer):
 
         """
         self._num_nodes = num_nodes
-        self._biases = np.zeros(num_nodes).astype(np.float32)
-        self._d_biases = np.zeros(num_nodes).astype(np.float32)
+        self._biases = np.zeros(num_nodes).astype(np.float64)
+        self._d_biases = np.zeros(num_nodes).astype(np.float64)
 
         self._weight_scale = weight_scale
 
@@ -49,8 +49,8 @@ class FullyConnectedLayer(Layer):
         """
         self._input_shape = shape
         self._weights = np.random.normal(loc=0, scale=self._weight_scale,
-                                         size=(shape[0], self._num_nodes)).astype(np.float32)
-        self._d_weights = np.zeros(self._weights.shape).astype(np.float32)
+                                         size=(shape[0], self._num_nodes)).astype(np.float64)
+        self._d_weights = np.zeros(self._weights.shape).astype(np.float64)
 
         # print "FullyConnectedLayer with input shape " + str(shape)
 

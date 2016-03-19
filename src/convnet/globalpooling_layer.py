@@ -16,7 +16,6 @@ class GlobalPoolingLayer(Layer):
         self._current_input = input
 
         output = np.empty(self.get_output_shape())
-        self._max_activation_indices = np.empty(self.get_output_shape())
 
         for f in range(self._input_shape[0]):
             # Average pooling
@@ -33,7 +32,7 @@ class GlobalPoolingLayer(Layer):
         max_output_grad = output_grad[self._input_shape[0]:2 * self._input_shape[0]]
         l2_output_grad = output_grad[2 * self._input_shape[0]:]
 
-        input_grad = np.empty(self._input_shape)
+        input_grad = np.empty(self._input_shape, dtype=np.float64)
         range_f = self._input_shape[0]
         for f in range(range_f):
             # Average grad
@@ -56,6 +55,7 @@ class GlobalPoolingLayer(Layer):
 
         """
         self._input_shape = shape
+        self._max_activation_indices = np.empty(self._input_shape[0], dtype=np.int32)
         # print "GlobalPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):

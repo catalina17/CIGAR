@@ -1,5 +1,4 @@
 import numpy as np
-import time
 
 import pycuda.driver as driver
 import pycuda.autoinit
@@ -11,6 +10,15 @@ from pycuda.compiler import SourceModule
 class ActivationLayerCUDA(ActivationLayer):
 
     def __init__(self, activation_fn):
+        """
+
+        Parameters
+        ----------
+        activation_fn : str
+            The name of the activation function for this layer.
+
+        """
+
         mod = SourceModule("""
             __global__ void multiply_them(float *dest, float *a, float *b) {
                 const int i = threadIdx.x;
@@ -20,6 +28,19 @@ class ActivationLayerCUDA(ActivationLayer):
         super(ActivationLayerCUDA, self).__init__(activation_fn)
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the layer applying the activation function to the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
 
@@ -59,6 +80,19 @@ class ActivationLayerCUDA(ActivationLayer):
         return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         h = None
         w = None
         if len(self._input_shape) == 1:
@@ -95,27 +129,23 @@ class ActivationLayerCUDA(ActivationLayer):
         return input_grad
 
     def set_input_shape(self, shape):
+        """
+
+        Parameters
+        ----------
+        shape : tuple
+            The shape of the inputs which this layer will process.
+
+        """
         super(ActivationLayerCUDA, self).set_input_shape(shape)
 
     def get_output_shape(self):
+        """
+
+        Returns
+        -------
+        tuple
+            The output shape of this layer.
+
+        """
         return super(ActivationLayerCUDA, self).get_output_shape()
-
-if __name__ == '__main__':
-    dummy_input = np.random.randn(64, 596)
-    print "Input:\n", dummy_input
-
-    layer = ActivationLayerCUDA('leakyReLU')
-    layer.set_input_shape((64, 596))
-
-    start = time.time()
-    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - Time taken: ", finish - start
-
-    dummy_output_grad = np.ones((64, 596))
-    print "Output gradient:\n", dummy_output_grad
-
-    start = time.time()
-    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - Time taken: ", finish - start

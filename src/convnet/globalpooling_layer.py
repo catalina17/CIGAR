@@ -12,6 +12,19 @@ class GlobalPoolingLayer(Layer):
         self._max_activation_indices = None
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the global pooling layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
 
@@ -28,6 +41,19 @@ class GlobalPoolingLayer(Layer):
         return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         mean_output_grad = output_grad[0:self._input_shape[0]]
         max_output_grad = output_grad[self._input_shape[0]:2 * self._input_shape[0]]
         l2_output_grad = output_grad[2 * self._input_shape[0]:]
@@ -52,6 +78,7 @@ class GlobalPoolingLayer(Layer):
         Parameters
         ----------
         shape : tuple
+            The shape of the inputs which this layer will process.
 
         """
         self._input_shape = shape
@@ -64,30 +91,9 @@ class GlobalPoolingLayer(Layer):
         Returns
         -------
         tuple
+            The output shape of this layer.
 
         """
         shape = (3 * self._input_shape[0],)
         # print "GlobalPoolingLayer with output shape " + str(shape)
         return shape
-
-if __name__ == '__main__':
-    dummy_input = np.ones((32, 70))
-    # print "Input:\n", dummy_input
-
-    layer = GlobalPoolingLayer()
-    layer.set_input_shape(dummy_input.shape)
-
-    start = time.time()
-    # print "Forward propagation:\n",
-    layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - time taken: ", finish - start
-
-    dummy_output_grad = np.ones((210,))
-    # print "Output gradient:\n", dummy_output_grad
-
-    start = time.time()
-    # print "Backpropagation:\n",
-    layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - time taken: ", finish - start

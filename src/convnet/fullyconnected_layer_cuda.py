@@ -11,6 +11,17 @@ from fullyconnected_layer import FullyConnectedLayer
 class FullyConnectedLayerCUDA(FullyConnectedLayer):
 
     def __init__(self, num_nodes, weight_scale):
+        """
+
+        Parameters
+        ----------
+        num_nodes : int
+            The number of nodes (outputs) of this layer.
+        weight_scale : float
+            The standard deviation sigma of the normal distribution N(0, sigma^2) from which
+            the filter weights are initialised.
+
+        """
         mod = SourceModule("""
             __global__ void multiply_them(float *dest, float *a, float *b) {
                 const int i = threadIdx.x;
@@ -20,6 +31,19 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
         super(FullyConnectedLayerCUDA, self).__init__(num_nodes, weight_scale)
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the fully-connected layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input.astype(np.float64)
 
@@ -51,6 +75,19 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
         return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         mod = SourceModule("""
             #define OUTPUT_LENGTH """ + str(self._num_nodes) + """
 

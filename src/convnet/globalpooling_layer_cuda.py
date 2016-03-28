@@ -21,6 +21,19 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
         super(GlobalPoolingLayerCUDA, self).__init__()
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the global pooling layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
 
@@ -71,6 +84,19 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
         return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         input_grad = np.empty(self._input_shape).astype(np.float64)
 
         mod = SourceModule("""
@@ -102,25 +128,3 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
 
     def get_output_shape(self):
         return super(GlobalPoolingLayerCUDA, self).get_output_shape()
-
-if __name__ == '__main__':
-    dummy_input = np.ones((32, 70))
-    # print "Input:\n", dummy_input
-
-    layer = GlobalPoolingLayerCUDA()
-    layer.set_input_shape(dummy_input.shape)
-
-    start = time.time()
-    # print "Forward propagation:\n",
-    layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - time taken: ", finish - start
-
-    dummy_output_grad = np.ones((210,))
-    # print "Output gradient:\n", dummy_output_grad
-
-    start = time.time()
-    # print "Backpropagation:\n",
-    layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - time taken: ", finish - start

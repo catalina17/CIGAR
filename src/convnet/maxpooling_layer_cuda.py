@@ -114,15 +114,17 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
         mod = SourceModule("""
             #define INGRAD_WIDTH """ + str(input_grad.shape[1]) + """
 
-            __global__ void max_pool_back(double *outgrad, double *ingrad, int *max_idx_w) {
+            __global__ void max_pool_back(double *out_grad, double *in_grad,
+                                          int *max_activation_indices) {
                 int col = blockIdx.x * blockDim.x + threadIdx.x;
                 int row = blockIdx.y * blockDim.y + threadIdx.y;
 
-                if (col >= (gridDim.x << 3) || row >= (gridDim.y << 2))
+                if (col >= (gridDim.x * blockDim.x) || row >= (gridDim.y * blockDim.x))
                     return;
 
-                int idx_out = col + row * (gridDim.x << 3);
-                ingrad[max_idx_w[idx_out] + row * INGRAD_WIDTH] = outgrad[idx_out];
+                int out_idx = col + row * (gridDim.x * blockDim.x);
+                in_grad[max_activation_indices[out_idx] + row * INGRAD_WIDTH] =
+                    out_grad[out_idx];
             }
             """)
 

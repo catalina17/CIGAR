@@ -27,8 +27,7 @@ class ActivationLayer(Layer):
     def forward_prop(self, input):
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
-        temp = np.copy(input)
-        return self._activation_fn(temp)
+        return self._activation_fn(input)
 
     def back_prop(self, output_grad):
         return output_grad * self._d_activation_fn(self._current_input)

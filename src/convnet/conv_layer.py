@@ -135,7 +135,7 @@ if __name__ == "__main__":
     layer.set_input_shape((128, 599))
 
     start = time.time()
-    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
+    layer.forward_prop(dummy_input)
     finish = time.time()
     print "Fwd prop - time taken: ", finish - start
 
@@ -143,6 +143,6 @@ if __name__ == "__main__":
     # print "\nOutput gradient:\n", dummy_output_grad
 
     start = time.time()
-    print "\n--->> Backpropagation:\n", layer.back_prop(dummy_output_grad)
+    layer.back_prop(dummy_output_grad)
     finish = time.time()
     print "Back prop - time taken: ", finish - start

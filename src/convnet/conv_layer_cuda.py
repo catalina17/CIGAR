@@ -70,28 +70,34 @@ class ConvLayerCUDA(ConvLayer):
             #define NUM_FILTERS """ + str(self._num_filters) + """
             #define OUT_WIDTH """ + str(self.get_output_shape()[1]) + """
 
-            __global__ void compute_in_grad(double *out_grad, double *in, double *f_weights,
-                                            double *in_grad) {
+            __global__ void compute_in_grad(double *out_grad, double *in,
+                                double *f_weights, double *in_grad) {
                 __shared__ double temp[FILTER_WIDTH * NUM_FILTERS];
-                int f_area = FILTER_HEIGHT * FILTER_WIDTH;
 
-                int out_idx = OUT_WIDTH * threadIdx.y + blockIdx.x - threadIdx.x;
-                int f_weights_idx = threadIdx.y * FILTER_WIDTH * FILTER_HEIGHT + threadIdx.x;
-
-                int idx = threadIdx.y * FILTER_WIDTH + threadIdx.x;
-                temp[idx] = 0.0;
-                if (blockIdx.x - threadIdx.x >= 0 && blockIdx.x - threadIdx.x < OUT_WIDTH) {
-                    for (int i = 0; i < f_area; i += FILTER_WIDTH) {
-                        temp[idx] += out_grad[out_idx] * f_weights[f_weights_idx + i];
-                    }
+                // Check that the filter completely lies inside the grid
+                // given by the input shape of the layer.
+                if (blockIdx.x - threadIdx.x < 0 ||
+                    blockIdx.x - threadIdx.x >= OUT_WIDTH) {
+                    return;
                 }
+
+                // Compute the locations of the current thread in the incoming
+                // gradient and in the filter weight matrix.
+                int out_idx = OUT_WIDTH * threadIdx.y + blockIdx.x - threadIdx.x;
+                int f_weights_idx = threadIdx.y * FILTER_HEIGHT * FILTER_WIDTH + threadIdx.x;
+                // Compute the current contribution to the gradient.
+                int idx = threadIdx.y * blockDim.x + threadIdx.x;
+                temp[idx] = out_grad[out_idx] * f_weights[f_weights_idx];
 
                 __syncthreads();
 
                 double sum = 0.0;
                 int i_max = FILTER_WIDTH * NUM_FILTERS;
-                for (int i = 0; i < i_max; ++i)
+                // Sum over the shared memory in the block to compute the value
+                // at the corresponding location in the new gradient.
+                for (int i = 0; i < i_max; ++i) {
                     sum += temp[i];
+                }
                 in_grad[blockIdx.y * gridDim.x + blockIdx.x] = sum;
             }
             """)

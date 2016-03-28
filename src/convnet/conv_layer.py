@@ -12,9 +12,14 @@ class ConvLayer(Layer):
         Parameters
         ----------
         num_filters : int
+            The number of filters for this layer.
         filter_shape : tuple
+            The shape of the filters.
         weight_scale : float
+            The standard deviation sigma of the normal distribution N(0, sigma^2) from which
+            the filter weights are initialised.
         padding_mode : bool
+            Whether the input is padded with columns of zeros.
 
         """
         self._num_filters = num_filters
@@ -41,6 +46,19 @@ class ConvLayer(Layer):
         self._current_padded_input = None
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the convolutional layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
 
         padded_input = np.zeros((self._input_shape[0],
@@ -62,6 +80,19 @@ class ConvLayer(Layer):
         return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         padded_input_grad = np.zeros((self._input_shape[0],
                                       self._input_shape[1] + self._num_padding_zeros))
 
@@ -84,6 +115,7 @@ class ConvLayer(Layer):
         Parameters
         ----------
         shape : tuple
+            The shape of the inputs which this layer will process.
 
         """
         self._input_shape = shape
@@ -95,6 +127,7 @@ class ConvLayer(Layer):
         Returns
         -------
         tuple
+            The output shape of this layer.
 
         """
         shape = (self._num_filters,
@@ -103,6 +136,14 @@ class ConvLayer(Layer):
         return shape
 
     def update_parameters(self, learning_rate):
+        """
+
+        Parameters
+        ----------
+        learning_rate : float
+            The learning rate used to update the filter weights and biases.
+
+        """
         self._filter_weights -= learning_rate * self._d_filter_weights
         self._biases -= learning_rate * self._d_biases
 
@@ -110,6 +151,15 @@ class ConvLayer(Layer):
         self._d_biases[...] = 0
 
     def serialise_parameters(self, file_idx):
+        """
+
+        Parameters
+        ----------
+        file_idx : int
+            The index associated with this layer in the network structure for which we wish to save
+            parameters.
+
+        """
         param_file = open('saved_params/Conv_' + str(file_idx) + '_weights', 'w')
         np.save(param_file, self._filter_weights)
         param_file.close()
@@ -119,6 +169,15 @@ class ConvLayer(Layer):
         param_file.close()
 
     def init_parameters_from_file(self, file_idx):
+        """
+
+        Parameters
+        ----------
+        file_idx : int
+            The index associated with this layer in the network structure for which we wish to
+            retrieve the saved parameters.
+
+        """
         param_file = open('saved_params/Conv_' + str(file_idx) + '_weights', 'rb')
         self._filter_weights = np.load(param_file)
         param_file.close()
@@ -126,23 +185,3 @@ class ConvLayer(Layer):
         param_file = open('saved_params/Conv_' + str(file_idx) + '_biases', 'rb')
         self._biases = np.load(param_file)
         param_file.close()
-
-if __name__ == "__main__":
-    dummy_input = np.ones((128, 599))
-    # print "Input:\n", dummy_input
-
-    layer = ConvLayer(num_filters=32, filter_shape=(128, 4), weight_scale=0.01, padding_mode=False)
-    layer.set_input_shape((128, 599))
-
-    start = time.time()
-    layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - time taken: ", finish - start
-
-    dummy_output_grad = np.ones((32, 596)) / 2
-    # print "\nOutput gradient:\n", dummy_output_grad
-
-    start = time.time()
-    layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - time taken: ", finish - start

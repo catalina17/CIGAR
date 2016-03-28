@@ -11,6 +11,21 @@ from conv_layer import ConvLayer
 class ConvLayerCUDA(ConvLayer):
 
     def __init__(self, num_filters, filter_shape, weight_scale, padding_mode=True):
+        """
+
+        Parameters
+        ----------
+        num_filters : int
+            The number of filters for this layer.
+        filter_shape : tuple
+            The shape of the filters.
+        weight_scale : float
+            The standard deviation sigma of the normal distribution N(0, sigma^2) from which
+            the filter weights are initialised.
+        padding_mode : bool
+            Whether the input is padded with columns of zeros.
+
+        """
         mod = SourceModule("""
             __global__ void multiply_them(float *dest, float *a, float *b) {
                 const int i = threadIdx.x;
@@ -20,6 +35,19 @@ class ConvLayerCUDA(ConvLayer):
         super(ConvLayerCUDA, self).__init__(num_filters, filter_shape, weight_scale, padding_mode)
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the convolutional layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
 
         padded_input = np.zeros((self._input_shape[0],
@@ -60,6 +88,19 @@ class ConvLayerCUDA(ConvLayer):
         return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         padded_input_grad = np.zeros((self._input_shape[0],
                                       self._input_shape[1] + self._num_padding_zeros)).\
             astype(np.double)
@@ -161,26 +202,3 @@ class ConvLayerCUDA(ConvLayer):
 
     def init_parameters_from_file(self, file_idx):
         super(ConvLayerCUDA, self).init_parameters_from_file(file_idx)
-
-if __name__ == '__main__':
-    dummy_input = np.ones((128, 599))
-    # print "Input:\n", dummy_input
-
-    layer = ConvLayerCUDA(num_filters=32, filter_shape=(128, 4), weight_scale=0.01,
-                          padding_mode=False)
-    layer.set_input_shape((128, 599))
-
-    start = time.time()
-    # print "\n--->> Forward propagation:\n",
-    layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - time taken: ", finish - start
-
-    dummy_output_grad = np.ones((32, 596)) / 2
-    # print "\nOutput gradient:\n", dummy_output_grad
-
-    # print "\n--->> Backpropagation:\n",
-    start = time.time()
-    layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - time taken: ", finish - start

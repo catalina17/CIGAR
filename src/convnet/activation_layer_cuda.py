@@ -18,7 +18,6 @@ class ActivationLayerCUDA(ActivationLayer):
             The name of the activation function for this layer.
 
         """
-
         mod = SourceModule("""
             __global__ void multiply_them(float *dest, float *a, float *b) {
                 const int i = threadIdx.x;
@@ -129,23 +128,7 @@ class ActivationLayerCUDA(ActivationLayer):
         return input_grad
 
     def set_input_shape(self, shape):
-        """
-
-        Parameters
-        ----------
-        shape : tuple
-            The shape of the inputs which this layer will process.
-
-        """
         super(ActivationLayerCUDA, self).set_input_shape(shape)
 
     def get_output_shape(self):
-        """
-
-        Returns
-        -------
-        tuple
-            The output shape of this layer.
-
-        """
         return super(ActivationLayerCUDA, self).get_output_shape()

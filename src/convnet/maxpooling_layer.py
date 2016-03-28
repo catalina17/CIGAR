@@ -12,6 +12,8 @@ class MaxPoolingLayer(Layer):
         Parameters
         ----------
         filter_shape : tuple
+            The shape of the pooling filter (area of disjoint regions over which max pooling will
+                                             be done).
 
         """
         self._filter_shape = filter_shape
@@ -21,6 +23,19 @@ class MaxPoolingLayer(Layer):
         self._max_activation_indices = None
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the max pooling layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
 
@@ -63,6 +78,19 @@ class MaxPoolingLayer(Layer):
             return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         input_grad = np.zeros(self._input_shape)
 
         for i in range(output_grad.shape[0]):
@@ -79,6 +107,7 @@ class MaxPoolingLayer(Layer):
         Parameters
         ----------
         shape : tuple
+            The shape of the inputs which this layer will process.
 
         """
         self._input_shape = shape
@@ -90,6 +119,7 @@ class MaxPoolingLayer(Layer):
         Returns
         -------
         tuple
+            The output shape of this layer.
 
         """
         assert self._input_shape[0] % self._filter_shape[0] == 0 and \
@@ -106,20 +136,3 @@ class MaxPoolingLayer(Layer):
 
         # print "MaxPoolingLayer with output shape " + str(shape)
         return shape
-
-if __name__ == "__main__":
-    dummy_input = np.random.randn(32, 596)
-    print "Input:\n", dummy_input
-
-    layer = MaxPoolingLayer(filter_shape=(1, 4))
-    layer.set_input_shape(dummy_input.shape)
-
-    start = time.time()
-    print "Forward propagation:\n", layer.forward_prop(dummy_input)
-
-    dummy_output_grad = np.ones((32, 149))
-    print "Output gradient:\n", dummy_output_grad
-
-    print "Backpropagation:\n", layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Time taken: %f s", finish - start

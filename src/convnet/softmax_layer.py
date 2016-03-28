@@ -9,17 +9,65 @@ class SoftmaxLayer(Layer):
         self._num_nodes = None
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the layer processing the input, representing the output of the network.
+
+        """
         input -= np.amax(input)
         exp = np.exp(input)
         return exp / np.sum(exp)
 
     def back_prop(self, output_grad):
-        raise NotImplementedError("Output layer -- no backpropagation")
+        raise NotImplementedError("Output layer ---> NO back-propagation; use initial_gradient()" +
+                                  " instead")
 
-    def initial_gradient(self, predicted_output, true_output):
+    @staticmethod
+    def initial_gradient(predicted_output, true_output):
+        """
+
+        Parameters
+        ----------
+        predicted_output : array of double
+            The predicted probability distribution over genres for the example which has just been
+            processed by the network.
+        true_output : array of double
+            The true probability distribution over genres for the same example.
+
+        Returns
+        -------
+        array of double
+            The initial gradient to be used in the back-propagation phase.
+
+        """
         return predicted_output - true_output
 
-    def loss(self, predicted_output, true_output):
+    @staticmethod
+    def loss(predicted_output, true_output):
+        """
+
+        Parameters
+        ----------
+        predicted_output : array of double
+            The predicted probability distribution over genres for the example which has just been
+            processed by the network.
+        true_output : array of double
+            The true probability distribution over genres for the same example.
+
+        Returns
+        -------
+        double
+            The result of the cross-entropy function applied to the given distributions.
+
+        """
         return -np.sum(true_output * np.log(predicted_output / np.sum(predicted_output)))
 
     def set_input_shape(self, shape):
@@ -28,6 +76,7 @@ class SoftmaxLayer(Layer):
         Parameters
         ----------
         shape : tuple
+            The shape of the inputs which this layer will process.
 
         """
         assert len(shape) == 1, "Input shape not suitable for output (Softmax) layer"
@@ -40,26 +89,9 @@ class SoftmaxLayer(Layer):
         Returns
         -------
         tuple
+            The output shape of this layer.
 
         """
         shape = (self._num_nodes,)
         # print "SoftmaxLayer with output shape " + str(shape)
         return shape
-
-if __name__ == "__main__":
-    dummy_input = np.zeros(3)
-    dummy_input[0] = 0
-    dummy_input[1] = 1
-    dummy_input[2] = 2
-    print "Input:\n", dummy_input
-
-    layer = SoftmaxLayer()
-    layer.set_input_shape((3,))
-
-    print "\n--->> Forward propagation:\n", layer.forward_prop(dummy_input)
-
-    dummy_output = np.abs(np.random.uniform(0, 1, 3))
-    one_hot_outputs = np.array([1, 0, 0])
-    print "\n--->> Output:\n", dummy_output
-    print "\nGradient:\n", layer.initial_gradient(one_hot_outputs, dummy_output)
-    print "\nLoss:\n", layer.loss(dummy_output, one_hot_outputs)

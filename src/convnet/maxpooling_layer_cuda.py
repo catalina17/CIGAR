@@ -11,6 +11,15 @@ from maxpooling_layer import MaxPoolingLayer
 class MaxPoolingLayerCUDA(MaxPoolingLayer):
 
     def __init__(self, filter_shape):
+        """
+
+        Parameters
+        ----------
+        filter_shape : tuple
+            The shape of the pooling filter (area of disjoint regions over which max pooling will
+                                             be done).
+
+        """
         mod = SourceModule("""
         __global__ void multiply_them(float *dest, float *a, float *b) {
             const int i = threadIdx.x;
@@ -20,6 +29,19 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
         super(MaxPoolingLayerCUDA, self).__init__(filter_shape)
 
     def forward_prop(self, input):
+        """
+
+        Parameters
+        ----------
+        input : array of double
+            The input for the layer.
+
+        Returns
+        -------
+        array of double
+            The result of the max pooling layer processing the input.
+
+        """
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
 
@@ -109,6 +131,19 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
             return output
 
     def back_prop(self, output_grad):
+        """
+
+        Parameters
+        ----------
+        output_grad : array of double
+            The incoming gradient from the next layer of the network.
+
+        Returns
+        -------
+        array of double
+            The gradient computed by this layer.
+
+        """
         input_grad = np.zeros(self._input_shape).astype(np.double)
 
         mod = SourceModule("""
@@ -141,16 +176,3 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
 
     def get_output_shape(self):
         return super(MaxPoolingLayerCUDA, self).get_output_shape()
-
-if __name__ == '__main__':
-    layer = MaxPoolingLayerCUDA(filter_shape=(1, 4))
-    input = np.random.randn(64, 596)
-    layer.set_input_shape((64, 596))
-
-    start = time.time()
-    layer.forward_prop(input)
-
-    output_grad = np.random.randn(64, 149)
-    layer.back_prop(output_grad)
-    finish = time.time()
-    print "Time taken: ", finish - start

@@ -1,7 +1,9 @@
 import numpy as np
 
 from convnet.conv_layer import ConvLayer
+from convnet.conv_layer_cuda import ConvLayerCUDA
 from convnet.fullyconnected_layer import FullyConnectedLayer
+from convnet.fullyconnected_layer_cuda import FullyConnectedLayerCUDA
 
 
 class ConvNN(object):
@@ -11,7 +13,8 @@ class ConvNN(object):
 
         Parameters
         ----------
-        layers : numpy.array of Layer objects
+        layers : array of Layer objects
+            A sequence of layers representing the architecture of the neural network.
         data_provider : DataProvider
 
         """
@@ -21,6 +24,9 @@ class ConvNN(object):
 
     def setup_layers(self, cnn_input_shape, cnn_output_shape):
         """
+
+        Sets the input shapes of all layers in order, checking that the input and output shapes are
+        consistent with the architecture of the network.
 
         Parameters
         ----------
@@ -44,11 +50,18 @@ class ConvNN(object):
     def train(self, learning_rate, num_iters, lrate_schedule=False):
         """
 
+        Performs training of the neural network and saves the training and test statistics
+        afterwards.
+
         Parameters
         ----------
         learning_rate : float
+            The (initial) learning rate for updating the parameters.
         num_iters : int
+            The number of training iterations.
         lrate_schedule : bool
+            Whether a learning schedule is used. The implemented learning schedule is:
+                learning_rate(k) = (1 - (k-1)/num_iters) * learning_rate(0).
 
         """
         self.results = dict(test=0.0, train=0.0, test_loss=0.0, train_loss=0.0,
@@ -96,6 +109,13 @@ class ConvNN(object):
         self._record_test_stats()
 
     def _record_training_stats(self):
+        """
+
+        Saves the following statistics for the training set used:
+            - training error (% of examples incorrectly classified)
+            - training loss (average cross-entropy loss function for all training examples)
+
+        """
         batch = self._data_provider.get_all_training_data()
         error = 0.0
         loss = 0.0
@@ -118,6 +138,13 @@ class ConvNN(object):
         self.results['train_loss'] = loss / batch.shape[0]
 
     def _record_test_stats(self):
+        """
+
+        Saves the following statistics for the test set:
+            - test error / accuracy (% of examples incorrectly classified)
+            - test loss (average cross-entropy loss function for all test examples)
+
+        """
         test_data = self._data_provider.get_test_data()
         test_error = 0.0
         test_loss = 0.0
@@ -140,13 +167,28 @@ class ConvNN(object):
     def predict(self, input):
         """
 
+        Processes the input and returns the predicted class.
+
         Parameters
         ----------
         input : numpy.array
+            A spectrogram of the audio file we wish to classify.
 
         Returns
         -------
-        int
+        array of double
+            An array containing the probabilities of the input belonging to each genre, in the
+            following order:
+                0 - 'classical'
+                1 - 'metal'
+                2 - 'blues'
+                3 - 'disco'
+                4 - 'hiphop'
+                5 - 'reggae'
+                6 - 'country'
+                7 - 'pop'
+                8 - 'jazz'
+                9 - 'rock'
 
         """
         # Forward propagation
@@ -159,28 +201,68 @@ class ConvNN(object):
         return current_input
 
     def serialise_params(self):
+        """
+
+        Saves the parameters for convolutional and fully-connected layers to files.
+
+        """
         count = 0
 
         for layer in self._layers:
-            if type(layer) in [ConvLayer, FullyConnectedLayer]:
+            if type(layer) in [ConvLayer, ConvLayerCUDA, FullyConnectedLayer,
+                               FullyConnectedLayerCUDA]:
                 count += 1
                 layer.serialise_parameters(count)
 
     def init_params_from_file(self, conv_only=False):
+        """
+
+        Initialises the neural network with previously saved parameters from the
+        corresponding files.
+
+        Parameters
+        ----------
+        conv_only : bool
+            Whether the initialisation is made only for convolutional layers.
+
+        """
         count = 0
 
         for layer in self._layers:
             if conv_only:
-                if type(layer) == ConvLayer:
+                if type(layer) in [ConvLayer, ConvLayerCUDA]:
                     count += 1
                     layer.init_parameters_from_file(count)
                     print 'Weights initialised in layer Conv' + str(count)
             else:
-                if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                if type(layer) in [ConvLayer, ConvLayerCUDA, FullyConnectedLayer,
+                                   FullyConnectedLayerCUDA]:
                     count += 1
                     layer.init_parameters_from_file(count)
 
     def test_data_activations_for_conv_layer(self, layer_id, genre):
+        """
+
+        Produces the activations of a specific convolutional layer and a given genre, on the test
+        subset corresponding to the genre.
+
+        Parameters
+        ----------
+        layer_id : int
+            The index of the convolutional layer we wish to produce activations for.
+        genre : int
+            The index of the genre we wish to produce activations for.
+
+        Returns
+        -------
+        array of dict{
+            'filter_activations' -> numpy.array (the activation for the current example),
+            'class_prob' -> array of double (the probabilities of the input belonging to each
+                                             genre),
+            'id' -> the index of the test example being evaluated
+        }
+
+        """
         self._data_provider.setup()
         test_data = self._data_provider.get_test_data_for_genre(genre)
         activations_for_test_data = np.empty(test_data.shape, dtype=dict)

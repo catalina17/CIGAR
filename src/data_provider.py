@@ -12,7 +12,9 @@ class DataProvider(object):
         Parameters
         ----------
         num_genres : int
+            The number of genres which will be processed by this instance.
         genre_dataset_size : int
+            The size of the per-genre dataset.
 
         """
         self._genre_dataset_size = genre_dataset_size
@@ -54,13 +56,35 @@ class DataProvider(object):
             np.random.shuffle(indices)
             self._test_indices[9] = indices[:10]
 
-    def get_input_shape(self):
+    @staticmethod
+    def get_input_shape():
+        """
+
+        Returns
+        -------
+        tuple
+            The shape of the input in the examples provided by DataProvider.
+
+        """
         return (128, 599)
 
     def get_output_shape(self):
+        """
+
+        Returns
+        -------
+        tuple
+            The shape of the output in the examples provided by DataProvider.
+
+        """
         return (self._num_genres,)
 
     def setup(self):
+        """
+
+        Initialises the training and test sets with data from the _data_provider variable.
+
+        """
         self._train_set = np.empty((self._num_genres, self._genre_dataset_size * 9 / 10),
                                    dtype=dict)
         self._test_set = np.empty((self._num_genres, self._genre_dataset_size / 10), dtype=dict)
@@ -84,6 +108,15 @@ class DataProvider(object):
             train_count = 0
 
     def get_next_batch(self):
+        """
+
+        Returns
+        -------
+        array of dict
+            An array of training examples, or None, if there are no more examples left to be
+            processed.
+
+        """
         if self._current_batch_start_index < self._genre_dataset_size * 9 / 10:
             batch = np.empty(self._num_genres * 2, dtype=dict)
             subbatch_size = 2
@@ -101,15 +134,49 @@ class DataProvider(object):
             return None
 
     def get_all_training_data(self):
+        """
+
+        Returns
+        -------
+        array of dict
+            An array containing all training examples.
+
+        """
         return self._train_set.flatten()
 
     def get_test_data(self):
+        """
+
+        Returns
+        -------
+        array of dict
+            An array containing all test examples.
+
+        """
         return self._test_set.flatten()
 
     def get_test_data_for_genre(self, genre):
+        """
+
+        Parameters
+        ----------
+        genre : int
+            The index of the genre we wish to retrieve test data for.
+
+        Returns
+        -------
+        array of dict
+            An array containing all test examples for the given genre index.
+
+        """
         return self._test_set[self._genres.index(genre), :].flatten()
 
     def reset(self):
+        """
+
+        Prepares the instance for a new training iteration.
+
+        """
         self._current_batch_start_index = 0
 
         for i in range(self._num_genres):
@@ -121,11 +188,18 @@ class DataProvider(object):
         Parameters
         ----------
         genre : str
+            The name of the genre we wish to retrieve the next example for.
         id : int
+            The index of the audio file for which we wish to obtain the corresponding data.
 
         Returns
         -------
-        tuple
+        dict{
+            'spec' -> array of float (the grescale intensities of the spectrogram image),
+            'out' -> array of float (the encoded correct output of the network for this example;
+                                     output[index(genre)] = 1 and output[i] = 0 otherwise),
+            'id' -> the index of the audio file
+        }
 
         """
         id_str = '000' + str(id)
@@ -140,15 +214,3 @@ class DataProvider(object):
         output[self._genres.index(genre)] = 1
 
         return dict(spec=im_gray, out=output, id=id)
-
-if __name__ == '__main__':
-    data_provider = DataProvider(num_genres=4)
-    data_provider.setup()
-
-    a = data_provider.get_all_training_data()
-    b = data_provider.get_test_data()
-
-    print "TRAINING DATA"
-    print a
-    print "TEST DATA"
-    print b

@@ -1,3 +1,4 @@
+import matplotlib.pyplot as pyplot
 import numpy as np
 import os
 import time
@@ -365,9 +366,8 @@ def max_pooling(dir_path, runs):
     f_gpu_backprop.close()
 
 
-if __name__ == '__main__':
+def compute_statistics():
     layer_types = ['activation', 'global_pooling', 'max_pooling', 'fully_connected', 'conv']
-    layer_types = ['conv']
 
     for layer_type in layer_types:
         path = './layers_eval/' + layer_type + '/'
@@ -386,3 +386,142 @@ if __name__ == '__main__':
             fully_connected(path, run_count)
         elif layer_type == 'conv':
             conv(path, run_count)
+
+
+def read_statistics(dir_path, start_pow_2):
+    f_cpu_fwdprop = open(dir_path + 'cpu_fwdprop.txt', 'r')
+    f_gpu_fwdprop = open(dir_path + 'gpu_fwdprop.txt', 'r')
+    f_cpu_backprop = open(dir_path + 'cpu_backprop.txt', 'r')
+    f_gpu_backprop = open(dir_path + 'gpu_backprop.txt', 'r')
+
+    data_cpu_fwd_prop = np.array(f_cpu_fwdprop.readlines())
+    data_cpu_back_prop = np.array(f_cpu_backprop.readlines())
+    data_gpu_fwd_prop = np.array(f_gpu_fwdprop.readlines())
+    data_gpu_back_prop = np.array(f_gpu_backprop.readlines())
+
+    f_cpu_fwdprop.close()
+    f_gpu_fwdprop.close()
+    f_cpu_backprop.close()
+    f_gpu_backprop.close()
+
+    runtimes_cpu_fwd_prop = np.empty((data_cpu_fwd_prop.shape[0] / 11))
+    runtimes_cpu_back_prop = np.empty((data_cpu_back_prop.shape[0] / 11))
+    runtimes_gpu_fwd_prop = np.empty((data_gpu_fwd_prop.shape[0] / 11))
+    runtimes_gpu_back_prop = np.empty((data_gpu_back_prop.shape[0] / 11))
+
+    current_pow_2 = start_pow_2
+    for i in range(data_cpu_fwd_prop.shape[0] / 11):
+
+        # CPU Forward Propagation
+        runtimes_cpu_fwd_prop[i] = 0.0
+        runtimes_i = data_cpu_fwd_prop[i * 11 : (i + 1) * 11]
+        for run in range(2, 11):
+            runtimes_cpu_fwd_prop[i] += float(runtimes_i[run])
+        runtimes_cpu_fwd_prop[i] /= 9.0
+
+        # CPU Back Propagation
+        runtimes_cpu_back_prop[i] = 0.0
+        runtimes_i = data_cpu_back_prop[i * 11 : (i + 1) * 11]
+        for run in range(2, 11):
+            runtimes_cpu_back_prop[i] += float(runtimes_i[run])
+        runtimes_cpu_back_prop[i] /= 9.0
+
+        # GPU Forward Propagation
+        runtimes_gpu_fwd_prop[i] = 0.0
+        runtimes_i = data_gpu_fwd_prop[i * 11 : (i + 1) * 11]
+        for run in range(2, 11):
+            runtimes_gpu_fwd_prop[i] += float(runtimes_i[run])
+        runtimes_gpu_fwd_prop[i] /= 9.0
+
+        # CPU Back Propagation
+        runtimes_gpu_back_prop[i] = 0.0
+        runtimes_i = data_gpu_back_prop[i * 11 : (i + 1) * 11]
+        for run in range(2, 11):
+            runtimes_gpu_back_prop[i] += float(runtimes_i[run])
+        runtimes_gpu_back_prop[i] /= 9.0
+
+        current_pow_2 += 1
+
+    return {
+        'cpu_fwd': runtimes_cpu_fwd_prop,
+        'cpu_back': runtimes_cpu_back_prop,
+        'gpu_fwd': runtimes_gpu_fwd_prop,
+        'gpu_back': runtimes_gpu_back_prop,
+    }
+
+
+def plot_statistics():
+    layer_types = ['activation', 'conv', 'fully_connected', 'global_pooling', 'max_pooling']
+
+    for layer_type in layer_types:
+        path_cata = './layers_eval_cata/' + layer_type + '/'
+        path_profir = './layers_eval_profir/' + layer_type + '/'
+
+        cpu_fwd_cata = None
+        cpu_back_cata = None
+        gpu_fwd_cata = None
+        gpu_back_cata = None
+
+        cpu_fwd_profir = None
+        cpu_back_profir = None
+        gpu_fwd_profir = None
+        gpu_back_profir = None
+
+        x_cata = None
+        x_profir = None
+
+        if layer_type == 'activation':
+            start_pow = 1
+        elif layer_type == 'conv':
+            start_pow = 5
+        elif layer_type == 'fully_connected':
+            start_pow = 1
+        elif layer_type == 'global_pooling':
+            start_pow = 1
+        elif layer_type == 'max_pooling':
+            start_pow = 7
+
+        statistics_cata = read_statistics(path_cata, start_pow)
+        statistics_profir = read_statistics(path_profir, start_pow)
+
+        x_cata = np.array(range(start_pow, statistics_cata['cpu_fwd'].shape[0] + start_pow))
+        x_profir = np.array(range(start_pow, statistics_profir['cpu_fwd'].shape[0] + start_pow))
+
+        cpu_fwd_cata = statistics_cata['cpu_fwd']
+        cpu_back_cata = statistics_cata['cpu_back']
+        gpu_fwd_cata = statistics_cata['gpu_fwd']
+        gpu_back_cata = statistics_cata['gpu_back']
+
+        cpu_fwd_profir = statistics_profir['cpu_fwd']
+        cpu_back_profir = statistics_profir['cpu_back']
+        gpu_fwd_profir = statistics_profir['gpu_fwd']
+        gpu_back_profir = statistics_profir['gpu_back']
+
+        pyplot.plot(x_cata, cpu_fwd_cata, label='CPU')
+        pyplot.plot(x_cata, gpu_fwd_cata, label='GT640M')
+        pyplot.plot(x_profir, gpu_fwd_profir, label='GTX980M')
+        pyplot.legend(loc='lower right')
+        pyplot.yscale('log')
+        pyplot.grid(True, which='both', linestyle='solid', color='0.8')
+        pyplot.xlabel('Base-2 logarithm of input size')
+        pyplot.ylabel('Forward propagation running time (s)')
+        pyplot.show()
+        pyplot.savefig(layer_type + '_fwd_prop.png')
+
+        pyplot.clf()
+
+        pyplot.plot(x_cata, cpu_back_cata, label='CPU')
+        pyplot.plot(x_cata, gpu_back_cata, label='GT640M')
+        pyplot.plot(x_profir, gpu_back_profir, label='GTX980M')
+        pyplot.legend(loc='lower right')
+        pyplot.yscale('log')
+        pyplot.grid(True, which='both', linestyle='solid', color='0.8')
+        pyplot.xlabel('Base-2 logarithm of gradient size')
+        pyplot.ylabel('Back-propagation running time (s)')
+        pyplot.show()
+        pyplot.savefig(layer_type + '_back_prop.png')
+
+        pyplot.clf()
+
+if __name__ == '__main__':
+    plot_statistics()

@@ -4,10 +4,10 @@ import numpy
 
 if __name__ == '__main__':
 
-    num_genres = 6
-    num_test_examples = 60
-    num_runs = 21
-    num_genres_str = 'six'
+    num_genres = 4
+    num_test_examples = 40
+    num_runs = 30
+    num_genres_str = 'four'
 
     average_confusion_matrix = numpy.zeros((num_genres, num_genres))
     mean_error = 0.0
@@ -37,7 +37,8 @@ if __name__ == '__main__':
     mean_error /= num_runs
     # As num_test_examples > 30, we can approximate the Binomial distribution
     # with the Normal distribution; we can therefore derive a 95% CI for the error
-    half_range = z_value * numpy.sqrt(mean_error * (1.0 - mean_error) / num_test_examples)
+    half_range = z_value * numpy.sqrt(mean_error * (1.0 - mean_error) /
+                                      (num_test_examples * num_runs))
 
     # 95% CI
     print str(mean_error) + " +- " + str(half_range)

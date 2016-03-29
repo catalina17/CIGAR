@@ -31,12 +31,15 @@ if __name__ == '__main__':
         confusion_matrix = numpy.array(ast.literal_eval(text_confusion_matrix))
         average_confusion_matrix += confusion_matrix
 
-    # Compute overall statistics
+    # Compute average confusion matrix
     average_confusion_matrix /= num_runs
+    # Estimate the classification error (unbiased estimator)
     mean_error /= num_runs
+    # As num_test_examples > 30, we can approximate the Binomial distribution
+    # with the Normal distribution; we can therefore derive a 95% CI for the error
     half_range = z_value * numpy.sqrt(mean_error * (1.0 - mean_error) / num_test_examples)
 
-    # Confidence interval for the classification error
+    # 95% CI
     print str(mean_error) + " +- " + str(half_range)
-    # Averaged confusion matrix between genres
-    print average_confusion_matrix * 10.0
+    # Averaged confusion matrix
+    print numpy.array(average_confusion_matrix * 1000.0, dtype=int) / 100.0

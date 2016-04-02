@@ -29,32 +29,11 @@ class DataProvider(object):
         self._test_set = None
 
         self._test_indices = np.empty((self._num_genres, self._genre_dataset_size / 10), dtype=int)
-        indices = np.array(range(100))
+        indices = np.array(range(self._genre_dataset_size))
 
-        np.random.shuffle(indices)
-        self._test_indices[0] = indices[:10]
-        np.random.shuffle(indices)
-        self._test_indices[1] = indices[:10]
-        if num_genres > 2:
+        for i in range(num_genres):
             np.random.shuffle(indices)
-            self._test_indices[2] = indices[:10]
-            np.random.shuffle(indices)
-            self._test_indices[3] = indices[:10]
-        if num_genres > 4:
-            np.random.shuffle(indices)
-            self._test_indices[4] = indices[:10]
-            np.random.shuffle(indices)
-            self._test_indices[5] = indices[:10]
-        if num_genres > 6:
-            np.random.shuffle(indices)
-            self._test_indices[6] = indices[:10]
-            np.random.shuffle(indices)
-            self._test_indices[7] = indices[:10]
-        if num_genres > 8:
-            np.random.shuffle(indices)
-            self._test_indices[8] = indices[:10]
-            np.random.shuffle(indices)
-            self._test_indices[9] = indices[:10]
+            self._test_indices[i] = indices[:self._genre_dataset_size / 10]
 
     @staticmethod
     def get_input_shape():

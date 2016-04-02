@@ -19,6 +19,7 @@ class FullyConnectedLayer(Layer):
 
         """
         self._num_nodes = num_nodes
+        # Set initial bias values to 0
         self._biases = np.zeros(num_nodes).astype(np.float64)
         self._d_biases = np.zeros(num_nodes).astype(np.float64)
 
@@ -62,10 +63,12 @@ class FullyConnectedLayer(Layer):
             The gradient computed by this layer.
 
         """
+        # Compute derivatives for weight matrix and bias values
         self._d_weights += np.dot(np.resize(self._current_input, (self._input_shape[0], 1)),
                                   np.resize(output_grad, (output_grad.shape[0], 1)).T)
         self._d_biases += output_grad
 
+        # Compute new gradient
         return np.dot(output_grad, self._weights.T)
 
     def set_input_shape(self, shape):
@@ -78,11 +81,10 @@ class FullyConnectedLayer(Layer):
 
         """
         self._input_shape = shape
+        # Initialise weights as described in the __init__ method docstring
         self._weights = np.random.normal(loc=0, scale=self._weight_scale,
                                          size=(shape[0], self._num_nodes)).astype(np.float64)
         self._d_weights = np.zeros(self._weights.shape).astype(np.float64)
-
-        # print "FullyConnectedLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -94,7 +96,6 @@ class FullyConnectedLayer(Layer):
 
         """
         shape = (self._num_nodes,)
-        # print "FullyConnectedLayer with output shape " + str(shape)
         return shape
 
     def update_parameters(self, learning_rate):
@@ -106,6 +107,7 @@ class FullyConnectedLayer(Layer):
             The learning rate used to update the filter weights and biases.
 
         """
+        # Update weight matrix and bias values with derivatives computed during back-propagation
         self._weights -= learning_rate * self._d_weights
         self._biases -= learning_rate * self._d_biases
 
@@ -147,26 +149,3 @@ class FullyConnectedLayer(Layer):
         param_file = open('saved_params/FC_' + str(file_idx) + '_biases', 'rb')
         self._biases = np.load(param_file)
         param_file.close()
-
-if __name__ == "__main__":
-
-    dummy_input = np.ones((1024,))
-    # print "Input:\n", dummy_input
-
-    layer = FullyConnectedLayer(512, weight_scale=0.01)
-    layer.set_input_shape((1024,))
-
-    start = time.time()
-    # print "\n--->> Forward propagation:\n", sum(layer._weights), "\n",
-    layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - Time taken: ", finish - start
-
-    dummy_output_grad = np.random.randn(512)
-    # print "\nOutput gradient:\n", dummy_output_grad
-
-    start = time.time()
-    # print "\n--->> Backpropagation:\n",
-    layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - Time taken: ", finish - start

@@ -38,7 +38,7 @@ class GlobalPoolingLayerCUDA(GlobalPoolingLayer):
         self._current_input = input
 
         output = np.empty(self.get_output_shape()).astype(np.float64)
-        # self._max_activation_indices = np.empty(self._input_shape).astype(np.int32)
+        # Save the L2 norm values now, to avoid recomputing them during back-propagation
         self._l2_values = np.empty(self._input_shape[0]).astype(np.float64)
 
         mod = SourceModule("""

@@ -54,6 +54,7 @@ class GlobalPoolingLayer(Layer):
             The gradient computed by this layer.
 
         """
+        # Separate the three types of gradient values to use for computing the new gradient
         mean_output_grad = output_grad[0:self._input_shape[0]]
         max_output_grad = output_grad[self._input_shape[0]:2 * self._input_shape[0]]
         l2_output_grad = output_grad[2 * self._input_shape[0]:]
@@ -63,10 +64,12 @@ class GlobalPoolingLayer(Layer):
         for f in range(range_f):
             # Average grad
             input_grad[f] = mean_output_grad[f] / self._input_shape[1]
-            # Max grad
+            # Send the max gradient value to the location from where the maximum value was
+            # extracted during forward propagation
             input_grad[f, self._max_activation_indices[f]] += max_output_grad[f]
             # L2-norm grad
             sqr_root = np.sqrt(np.sum(self._current_input[f] ** 2))
+            # Avoid producing exploding values, if square root is very small
             if sqr_root >= 1e-5:
                 input_grad[f] += self._current_input[f] / sqr_root * l2_output_grad[f]
 
@@ -83,7 +86,6 @@ class GlobalPoolingLayer(Layer):
         """
         self._input_shape = shape
         self._max_activation_indices = np.empty(self._input_shape[0], dtype=np.int32)
-        # print "GlobalPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -95,5 +97,4 @@ class GlobalPoolingLayer(Layer):
 
         """
         shape = (3 * self._input_shape[0],)
-        # print "GlobalPoolingLayer with output shape " + str(shape)
         return shape

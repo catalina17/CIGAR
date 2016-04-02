@@ -17,7 +17,6 @@ class MaxPoolingLayer(Layer):
 
         """
         self._filter_shape = filter_shape
-        print "Filter shape: " + str(filter_shape)
         self._input_shape = None
         self._current_input = None
         self._max_activation_indices = None
@@ -64,11 +63,14 @@ class MaxPoolingLayer(Layer):
                 w_max = 0
                 for h in range(current_h, current_h + filter_h):
                     for w in range(current_w, current_w + filter_w):
+                        # Determine maximum value in the current pooling region
                         if input[h, w] > max_val:
+                            # Record indices of the maximum
                             h_max = h
                             w_max = w
                             max_val = input[h, w]
                 output[i, j] = max_val
+                # Save indices for the current region
                 self._max_activation_indices[i, j, 0] = h_max
                 self._max_activation_indices[i, j, 1] = w_max
 
@@ -97,6 +99,8 @@ class MaxPoolingLayer(Layer):
             for j in range(output_grad.shape[1]):
                 h = self._max_activation_indices[i, j, 0]
                 w = self._max_activation_indices[i, j, 1]
+                # Send the current gradient to the input location from where the maximum value was
+                # obtained
                 input_grad[h, w] = output_grad[i, j]
 
         return input_grad
@@ -111,7 +115,6 @@ class MaxPoolingLayer(Layer):
 
         """
         self._input_shape = shape
-        # print "MaxPoolingLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -126,13 +129,10 @@ class MaxPoolingLayer(Layer):
                self._input_shape[1] % self._filter_shape[1] == 0,\
             "Input shape is not a multiple of filter shape in MaxPoolingLayer"
 
-        shape = None
-
         if self._input_shape[0] / self._filter_shape[0] == 1:
             shape = (self._input_shape[1] / self._filter_shape[1],)
         else:
             shape = (self._input_shape[0] / self._filter_shape[0],
                      self._input_shape[1] / self._filter_shape[1])
 
-        # print "MaxPoolingLayer with output shape " + str(shape)
         return shape

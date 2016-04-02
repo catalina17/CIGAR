@@ -43,8 +43,6 @@ class ActivationLayerCUDA(ActivationLayer):
         assert self._input_shape == input.shape, "Input does not have correct shape"
         self._current_input = input
 
-        h = None
-        w = None
         if len(self._input_shape) == 1:
             h = 1
             w = self._input_shape[0]
@@ -92,8 +90,6 @@ class ActivationLayerCUDA(ActivationLayer):
             The gradient computed by this layer.
 
         """
-        h = None
-        w = None
         if len(self._input_shape) == 1:
             h = 1
             w = self._input_shape[0]

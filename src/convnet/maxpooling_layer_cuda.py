@@ -54,6 +54,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
 
         mod = None
         if self._filter_shape[1] == 4:
+            # Pooling regions of shape (1, 4)
             mod = SourceModule("""
                 #define INPUT_HEIGHT """ + str(self._input_shape[0]) + """
                 #define INPUT_WIDTH """ + str(self._input_shape[1] / 4) + """
@@ -92,6 +93,7 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                 }
                 """)
         elif self._filter_shape[1] == 2:
+            # Pooling regions of shape (1, 2)
             mod = SourceModule("""
                 #define INPUT_HEIGHT """ + str(self._input_shape[0]) + """
                 #define INPUT_WIDTH """ + str(self._input_shape[1] / 2) + """
@@ -123,8 +125,6 @@ class MaxPoolingLayerCUDA(MaxPoolingLayer):
                  driver.Out(self._max_activation_indices), block=(self._filter_shape[1], 1, 1),
                  grid=(self.get_output_shape()[1], self.get_output_shape()[0], 1))
 
-        # print "OUT", output
-        # print "Idx", self._max_activation_indices
         if output.shape[0] == 1:
             return output[0]
         else:

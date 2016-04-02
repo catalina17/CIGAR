@@ -29,10 +29,12 @@ class ConvLayer(Layer):
         self._filter_weights = np.empty((num_filters, filter_shape[0], filter_shape[1])).\
             astype(np.double)
         for i in range(num_filters):
+            # Initialise weights as described in the docstring
             self._filter_weights[i] = np.random.normal(loc=0, scale=weight_scale,
                                                        size=filter_shape).astype(np.double)
         self._d_filter_weights = np.zeros(self._filter_weights.shape).astype(np.double)
 
+        # Set initial bias values to 0
         self._biases = np.zeros(num_filters).astype(np.double)
         self._d_biases = np.zeros(num_filters).astype(np.double)
 
@@ -72,8 +74,12 @@ class ConvLayer(Layer):
         filter_w = self._filter_shape[1]
         range_w = self.get_output_shape()[1]
 
+        # For each filter / row in the output
         for f in range(self._num_filters):
+            # For each valid convolution index
             for w in range(range_w):
+                # Compute the dot product between the filter weight matrix and the overlapped input
+                # sub-matrix and then add the bias value for the current filter
                 output[f][w] = np.sum(np.multiply(self._filter_weights[f],
                                                   padded_input[:, w:w+filter_w])) + self._biases[f]
 
@@ -98,12 +104,18 @@ class ConvLayer(Layer):
 
         range_w = self.get_output_shape()[1]
         filter_w = self._filter_shape[1]
+        # For each valid convolution result index within the gradient length
         for w in range(range_w):
+            # For each filter in the layer
             for f in range(self._num_filters):
+                # Compute the contribution of the current gradient location for the current filter
+                # to the new gradient
                 padded_input_grad[:, w:w + filter_w] += output_grad[f][w] * self._filter_weights[f]
+                # Update derivative for the current filter weight matrix
                 self._d_filter_weights[f] += output_grad[f][w] * \
                                              self._current_padded_input[:, w:w + filter_w]
 
+        # Compute biases derivative
         self._d_biases += np.sum(output_grad, axis=1)
 
         return padded_input_grad[:, self._num_padding_zeros / 2:self._input_shape[1] +
@@ -119,7 +131,6 @@ class ConvLayer(Layer):
 
         """
         self._input_shape = shape
-        # print "ConvLayer with input shape " + str(shape)
 
     def get_output_shape(self):
         """
@@ -132,7 +143,6 @@ class ConvLayer(Layer):
         """
         shape = (self._num_filters,
                  self._input_shape[1] + self._num_padding_zeros - self._filter_shape[1] + 1)
-        # print "ConvLayer with output shape " + str(shape)
         return shape
 
     def update_parameters(self, learning_rate):
@@ -144,6 +154,7 @@ class ConvLayer(Layer):
             The learning rate used to update the filter weights and biases.
 
         """
+        # Update parameters with computed derivatives from the back-propagation phase
         self._filter_weights -= learning_rate * self._d_filter_weights
         self._biases -= learning_rate * self._d_biases
 

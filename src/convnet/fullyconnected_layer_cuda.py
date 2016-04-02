@@ -136,25 +136,3 @@ class FullyConnectedLayerCUDA(FullyConnectedLayer):
 
     def init_parameters_from_file(self, file_idx):
         super(FullyConnectedLayerCUDA, self).init_parameters_from_file(file_idx)
-
-if __name__ == "__main__":
-    dummy_input = np.ones((1024,))
-    # print "Input:\n", dummy_input
-
-    layer = FullyConnectedLayerCUDA(512, 0.01)
-    layer.set_input_shape((1024,))
-
-    start = time.time()
-    # print "\n--->> Forward propagation:\n", sum(layer._weights), "\n",
-    layer.forward_prop(dummy_input)
-    finish = time.time()
-    print "Fwd prop - Time taken: ", finish - start
-
-    dummy_output_grad = np.random.randn(512)
-    # print "\nOutput gradient:\n", dummy_output_grad
-
-    start = time.time()
-    # print "\n--->> Backpropagation:\n",
-    layer.back_prop(dummy_output_grad)
-    finish = time.time()
-    print "Back prop - Time taken: ", finish - start

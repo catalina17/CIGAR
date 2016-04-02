@@ -3,16 +3,16 @@ import numpy as np
 import os
 import time
 
-from convnet.activation_layer import ActivationLayer
-from convnet.activation_layer_cuda import ActivationLayerCUDA
-from convnet.conv_layer import ConvLayer
-from convnet.conv_layer_cuda import ConvLayerCUDA
-from convnet.fullyconnected_layer import FullyConnectedLayer
-from convnet.fullyconnected_layer_cuda import FullyConnectedLayerCUDA
-from convnet.globalpooling_layer import GlobalPoolingLayer
-from convnet.globalpooling_layer_cuda import GlobalPoolingLayerCUDA
-from convnet.maxpooling_layer import MaxPoolingLayer
-from convnet.maxpooling_layer_cuda import MaxPoolingLayerCUDA
+from convnet_layers.activation_layer import ActivationLayer
+from convnet_layers.activation_layer_cuda import ActivationLayerCUDA
+from convnet_layers.conv_layer import ConvLayer
+from convnet_layers.conv_layer_cuda import ConvLayerCUDA
+from convnet_layers.fullyconnected_layer import FullyConnectedLayer
+from convnet_layers.fullyconnected_layer_cuda import FullyConnectedLayerCUDA
+from convnet_layers.globalpooling_layer import GlobalPoolingLayer
+from convnet_layers.globalpooling_layer_cuda import GlobalPoolingLayerCUDA
+from convnet_layers.maxpooling_layer import MaxPoolingLayer
+from convnet_layers.maxpooling_layer_cuda import MaxPoolingLayerCUDA
 
 
 def activation(dir_path, runs):

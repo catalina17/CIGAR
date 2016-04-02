@@ -3,36 +3,36 @@ import os
 
 import matplotlib.pyplot as plt
 
-from convnn import ConvNN
-from convnet.conv_layer import ConvLayer
-from convnet.activation_layer import ActivationLayer
-from convnet.maxpooling_layer_cuda import MaxPoolingLayerCUDA
-from convnet.globalpooling_layer import GlobalPoolingLayer
-from convnet.fullyconnected_layer import FullyConnectedLayer
-from convnet.softmax_layer import SoftmaxLayer
+from convnet import ConvNet
+from convnet_layers.conv_layer import ConvLayer
+from convnet_layers.activation_layer import ActivationLayer
+from convnet_layers.maxpooling_layer_cuda import MaxPoolingLayerCUDA
+from convnet_layers.globalpooling_layer import GlobalPoolingLayer
+from convnet_layers.fullyconnected_layer import FullyConnectedLayer
+from convnet_layers.softmax_layer import SoftmaxLayer
 from data_provider import DataProvider
 
 
 if __name__ == '__main__':
-    neural_net = ConvNN([ConvLayer(32, (128, 4), weight_scale=0.044, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         MaxPoolingLayerCUDA((1, 4)),
+    neural_net = ConvNet([ConvLayer(32, (128, 4), weight_scale=0.044, padding_mode=False),
+                          ActivationLayer('leakyReLU'),
+                          MaxPoolingLayerCUDA((1, 4)),
 
-                         ConvLayer(32, (32, 4), weight_scale=0.088, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         MaxPoolingLayerCUDA((1, 2)),
+                          ConvLayer(32, (32, 4), weight_scale=0.088, padding_mode=False),
+                          ActivationLayer('leakyReLU'),
+                          MaxPoolingLayerCUDA((1, 2)),
 
-                         ConvLayer(32, (32, 4), weight_scale=0.088, padding_mode=False),
-                         ActivationLayer('leakyReLU'),
-                         GlobalPoolingLayer(),
+                          ConvLayer(32, (32, 4), weight_scale=0.088, padding_mode=False),
+                          ActivationLayer('leakyReLU'),
+                          GlobalPoolingLayer(),
 
-                         FullyConnectedLayer(32, weight_scale=0.125),
-                         ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(32, weight_scale=0.125),
-                         ActivationLayer('leakyReLU'),
-                         FullyConnectedLayer(6, weight_scale=0.17),
-                         SoftmaxLayer()],
-                        DataProvider(num_genres=6))
+                          FullyConnectedLayer(32, weight_scale=0.125),
+                          ActivationLayer('leakyReLU'),
+                          FullyConnectedLayer(32, weight_scale=0.125),
+                          ActivationLayer('leakyReLU'),
+                          FullyConnectedLayer(6, weight_scale=0.17),
+                          SoftmaxLayer()],
+                         DataProvider(num_genres=6))
 
     neural_net.setup_layers((128, 599), (6, ))
     neural_net.init_params_from_file()

@@ -1,12 +1,12 @@
 import numpy as np
 
-from convnet.conv_layer import ConvLayer
-from convnet.conv_layer_cuda import ConvLayerCUDA
-from convnet.fullyconnected_layer import FullyConnectedLayer
-from convnet.fullyconnected_layer_cuda import FullyConnectedLayerCUDA
+from convnet_layers.conv_layer import ConvLayer
+from convnet_layers.conv_layer_cuda import ConvLayerCUDA
+from convnet_layers.fullyconnected_layer import FullyConnectedLayer
+from convnet_layers.fullyconnected_layer_cuda import FullyConnectedLayerCUDA
 
 
-class ConvNN(object):
+class ConvNet(object):
 
     def __init__(self, layers, data_provider):
         """
@@ -45,7 +45,7 @@ class ConvNN(object):
                                                   " does not match given output shape " +\
                                                   str(cnn_output_shape)
 
-        # print "ConvNN setup successful!"
+        # print "ConvNet setup successful!"
 
     def train(self, learning_rate, num_iters, lrate_schedule=False):
         """
@@ -74,7 +74,7 @@ class ConvNN(object):
         self._data_provider.setup()
 
         for it in range(num_iters):
-            print "ConvNN training: iteration #" + str(it + 1)
+            print "ConvNet training: iteration #" + str(it + 1)
 
             self._data_provider.reset()
             batch = self._data_provider.get_next_batch()

@@ -405,48 +405,58 @@ def read_statistics(dir_path, start_pow_2):
     f_gpu_backprop.close()
 
     runtimes_cpu_fwd_prop = np.empty((data_cpu_fwd_prop.shape[0] / 11))
+    runtimes_cpu_fwd_prop_sigmas = np.empty((data_cpu_fwd_prop.shape[0] / 11))
     runtimes_cpu_back_prop = np.empty((data_cpu_back_prop.shape[0] / 11))
+    runtimes_cpu_back_prop_sigmas = np.empty((data_cpu_back_prop.shape[0] / 11))
     runtimes_gpu_fwd_prop = np.empty((data_gpu_fwd_prop.shape[0] / 11))
+    runtimes_gpu_fwd_prop_sigmas = np.empty((data_gpu_fwd_prop.shape[0] / 11))
     runtimes_gpu_back_prop = np.empty((data_gpu_back_prop.shape[0] / 11))
+    runtimes_gpu_back_prop_sigmas = np.empty((data_gpu_back_prop.shape[0] / 11))
 
     current_pow_2 = start_pow_2
+    float_runtimes_i = np.empty((9, ), dtype=float)
+
     for i in range(data_cpu_fwd_prop.shape[0] / 11):
 
         # CPU Forward Propagation
-        runtimes_cpu_fwd_prop[i] = 0.0
         runtimes_i = data_cpu_fwd_prop[i * 11 : (i + 1) * 11]
         for run in range(2, 11):
-            runtimes_cpu_fwd_prop[i] += float(runtimes_i[run])
-        runtimes_cpu_fwd_prop[i] /= 9.0
+            float_runtimes_i[run - 2] = float(runtimes_i[run])
+        runtimes_cpu_fwd_prop[i] = np.mean(float_runtimes_i)
+        runtimes_cpu_fwd_prop_sigmas[i] = np.std(float_runtimes_i)
 
         # CPU Back Propagation
-        runtimes_cpu_back_prop[i] = 0.0
         runtimes_i = data_cpu_back_prop[i * 11 : (i + 1) * 11]
         for run in range(2, 11):
-            runtimes_cpu_back_prop[i] += float(runtimes_i[run])
-        runtimes_cpu_back_prop[i] /= 9.0
+            float_runtimes_i[run - 2] = float(runtimes_i[run])
+        runtimes_cpu_back_prop[i] = np.mean(float_runtimes_i)
+        runtimes_cpu_back_prop_sigmas[i] = np.std(float_runtimes_i)
 
         # GPU Forward Propagation
-        runtimes_gpu_fwd_prop[i] = 0.0
         runtimes_i = data_gpu_fwd_prop[i * 11 : (i + 1) * 11]
         for run in range(2, 11):
-            runtimes_gpu_fwd_prop[i] += float(runtimes_i[run])
-        runtimes_gpu_fwd_prop[i] /= 9.0
+            float_runtimes_i[run - 2] = float(runtimes_i[run])
+        runtimes_gpu_fwd_prop[i] = np.mean(float_runtimes_i)
+        runtimes_gpu_fwd_prop_sigmas[i] = np.std(float_runtimes_i)
 
         # CPU Back Propagation
-        runtimes_gpu_back_prop[i] = 0.0
         runtimes_i = data_gpu_back_prop[i * 11 : (i + 1) * 11]
         for run in range(2, 11):
-            runtimes_gpu_back_prop[i] += float(runtimes_i[run])
-        runtimes_gpu_back_prop[i] /= 9.0
+            float_runtimes_i[run - 2] = float(runtimes_i[run])
+        runtimes_gpu_back_prop[i] = np.mean(float_runtimes_i)
+        runtimes_gpu_back_prop_sigmas[i] = np.std(float_runtimes_i)
 
         current_pow_2 += 1
 
     return {
         'cpu_fwd': runtimes_cpu_fwd_prop,
+        'cpu_fwd_sigmas': runtimes_cpu_fwd_prop_sigmas,
         'cpu_back': runtimes_cpu_back_prop,
+        'cpu_back_sigmas': runtimes_cpu_back_prop_sigmas,
         'gpu_fwd': runtimes_gpu_fwd_prop,
+        'gpu_fwd_sigmas': runtimes_gpu_fwd_prop_sigmas,
         'gpu_back': runtimes_gpu_back_prop,
+        'gpu_back_sigmas': runtimes_gpu_back_prop_sigmas,
     }
 
 
@@ -454,22 +464,11 @@ def plot_statistics():
     layer_types = ['activation', 'conv', 'fully_connected', 'global_pooling', 'max_pooling']
 
     for layer_type in layer_types:
+        # Paths for saving plots
         path_cata = './layers_eval_cata/' + layer_type + '/'
         path_profir = './layers_eval_profir/' + layer_type + '/'
 
-        cpu_fwd_cata = None
-        cpu_back_cata = None
-        gpu_fwd_cata = None
-        gpu_back_cata = None
-
-        cpu_fwd_profir = None
-        cpu_back_profir = None
-        gpu_fwd_profir = None
-        gpu_back_profir = None
-
-        x_cata = None
-        x_profir = None
-
+        # Starting power of 2 of the input size for the current type of layer
         if layer_type == 'activation':
             start_pow = 1
         elif layer_type == 'conv':
@@ -481,45 +480,60 @@ def plot_statistics():
         elif layer_type == 'max_pooling':
             start_pow = 7
 
+        # Load stats from file
         statistics_cata = read_statistics(path_cata, start_pow)
         statistics_profir = read_statistics(path_profir, start_pow)
 
+        # x axis values for log2(input_size)
         x_cata = np.array(range(start_pow, statistics_cata['cpu_fwd'].shape[0] + start_pow))
         x_profir = np.array(range(start_pow, statistics_profir['cpu_fwd'].shape[0] + start_pow))
 
         cpu_fwd_cata = statistics_cata['cpu_fwd']
+        cpu_fwd_cata_sigmas = statistics_cata['cpu_fwd_sigmas']
         cpu_back_cata = statistics_cata['cpu_back']
+        cpu_back_cata_sigmas = statistics_cata['cpu_back_sigmas']
         gpu_fwd_cata = statistics_cata['gpu_fwd']
+        gpu_fwd_cata_sigmas = statistics_cata['gpu_fwd_sigmas']
         gpu_back_cata = statistics_cata['gpu_back']
-
-        cpu_fwd_profir = statistics_profir['cpu_fwd']
-        cpu_back_profir = statistics_profir['cpu_back']
+        gpu_back_cata_sigmas = statistics_cata['gpu_back_sigmas']
         gpu_fwd_profir = statistics_profir['gpu_fwd']
+        gpu_fwd_profir_sigmas = statistics_profir['gpu_fwd_sigmas']
         gpu_back_profir = statistics_profir['gpu_back']
+        gpu_back_profir_sigmas = statistics_profir['gpu_back_sigmas']
 
-        pyplot.plot(x_cata, cpu_fwd_cata, label='CPU')
-        pyplot.plot(x_cata, gpu_fwd_cata, label='GT640M')
-        pyplot.plot(x_profir, gpu_fwd_profir, label='GTX980M')
+        # Plot runtimes for the forward propagation operation
+        lim = min(x_cata.shape[0], x_profir.shape[0])
+        x = x_cata[:lim]
+        pyplot.errorbar(x, cpu_fwd_cata[:lim], yerr=cpu_fwd_cata_sigmas[:lim],
+                        label='CPU')
+        pyplot.errorbar(x, gpu_fwd_cata[:lim], yerr=gpu_fwd_cata_sigmas[:lim],
+                        label='GT640M')
+        pyplot.errorbar(x, gpu_fwd_profir[:lim], yerr=gpu_fwd_profir_sigmas[:lim],
+                        label='GTX980M')
         pyplot.legend(loc='lower right')
         pyplot.yscale('log')
         pyplot.grid(True, which='both', linestyle='solid', color='0.8')
         pyplot.xlabel('Base-2 logarithm of input size')
         pyplot.ylabel('Forward propagation running time (s)')
         pyplot.show()
-        pyplot.savefig(layer_type + '_fwd_prop.png')
+        pyplot.savefig(layer_type + '_fwd_prop.pdf', format='pdf')
 
         pyplot.clf()
 
-        pyplot.plot(x_cata, cpu_back_cata, label='CPU')
-        pyplot.plot(x_cata, gpu_back_cata, label='GT640M')
-        pyplot.plot(x_profir, gpu_back_profir, label='GTX980M')
+        # Plot runtimes for the forward propagation operation
+        pyplot.errorbar(x, cpu_back_cata[:lim], yerr=cpu_back_cata_sigmas[:lim],
+                        label='CPU')
+        pyplot.errorbar(x, gpu_back_cata[:lim], yerr=gpu_back_cata_sigmas[:lim],
+                        label='GT640M')
+        pyplot.errorbar(x, gpu_back_profir[:lim], yerr=gpu_back_profir_sigmas[:lim],
+                        label='GTX980M')
         pyplot.legend(loc='lower right')
         pyplot.yscale('log')
         pyplot.grid(True, which='both', linestyle='solid', color='0.8')
         pyplot.xlabel('Base-2 logarithm of gradient size')
         pyplot.ylabel('Back-propagation running time (s)')
         pyplot.show()
-        pyplot.savefig(layer_type + '_back_prop.png')
+        pyplot.savefig(layer_type + '_back_prop.pdf', format='pdf')
 
         pyplot.clf()
 

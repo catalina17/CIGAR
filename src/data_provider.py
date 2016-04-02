@@ -28,10 +28,12 @@ class DataProvider(object):
         self._train_set = None
         self._test_set = None
 
+        # 90:10 proportion for training and test sets
         self._test_indices = np.empty((self._num_genres, self._genre_dataset_size / 10), dtype=int)
         indices = np.array(range(self._genre_dataset_size))
 
         for i in range(num_genres):
+            # The test set for each genre needs is a random partition
             np.random.shuffle(indices)
             self._test_indices[i] = indices[:self._genre_dataset_size / 10]
 
@@ -76,10 +78,13 @@ class DataProvider(object):
 
             test_count = 0
             for i in range(self._genre_dataset_size):
+                # If the current index represents an example in the test set
                 if i in self._test_indices[igenre]:
+                    # Add the example to the test set
                     self._test_set[igenre, test_count] = self._get_next_example(genre, i)
                     test_count += 1
                 else:
+                    # Otherwise add it to the training set
                     self._train_set[igenre, train_count] = self._get_next_example(genre, i)
                     train_count += 1
 
@@ -96,7 +101,9 @@ class DataProvider(object):
             processed.
 
         """
+        # If not all training examples have been sent in the previous batches
         if self._current_batch_start_index < self._genre_dataset_size * 9 / 10:
+            # Create a new batch
             batch = np.empty(self._num_genres * 2, dtype=dict)
             subbatch_size = 2
 
@@ -158,6 +165,7 @@ class DataProvider(object):
         """
         self._current_batch_start_index = 0
 
+        # Shuffle training examples as required by stochastic gradient descent
         for i in range(self._num_genres):
             np.random.shuffle(self._train_set[i, :])
 
@@ -184,11 +192,16 @@ class DataProvider(object):
         id_str = '000' + str(id)
         if id < 10:
             id_str = '0' + id_str
+        # Create path to spectrogram file
         filename = '../../spectrograms/' + genre + '/' + genre + '.' + id_str + '.png'
+        # Read image in array
         im = imread(filename)
+        # Convert RGB information to grayscale values
         im_gray = im[:, :, 0] * 0.299 + im[:, :, 1] * 0.587 + im[:, :, 2] * 0.114
+        # Normalise
         im_gray /= 255.0
 
+        # Use one-hot encoding to specify the corresponding genre
         output = np.zeros(self._num_genres)
         output[self._genres.index(genre)] = 1
 

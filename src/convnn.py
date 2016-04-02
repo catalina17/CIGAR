@@ -89,14 +89,17 @@ class ConvNN(object):
 
                     # Backpropagation phase
                     predicted_output = current_input
+                    # Compute initial gradient at the output layer
                     current_gradient = self._layers[-1].initial_gradient(predicted_output,
                                                                          training_example['out'])
                     for layer in reversed(self._layers[:-1]):
+                        # Compute gradient for each layer in reverse order
                         current_gradient = layer.back_prop(current_gradient)
 
                     # Update parameters - online mode
                     for layer in self._layers:
-                        if type(layer) in [ConvLayer, FullyConnectedLayer]:
+                        if type(layer) in [ConvLayer, ConvLayerCUDA, FullyConnectedLayer,
+                                           FullyConnectedLayerCUDA]:
                             if lrate_schedule:
                                 layer.update_parameters(learning_rate * (num_iters - it + 1.0) /
                                                         num_iters)
@@ -125,11 +128,9 @@ class ConvNN(object):
             for layer in self._layers:
                 current_input = layer.forward_prop(current_input)
 
-            # print "Predicted output: ", current_input, "- True output: ", training_example['out']
-
+            loss += self._layers[-1].loss(current_input, training_example['out'])
             if np.argmax(current_input) != np.argmax(training_example['out']):
                 error += 1.0
-            loss += self._layers[-1].loss(current_input, training_example['out'])
 
         print "\nTraining error:\n", error / batch.shape[0]
         print "\nTraining loss:\n", loss / batch.shape[0]
@@ -154,7 +155,7 @@ class ConvNN(object):
             print "Actual ", str(np.argmax(test_example['out']))
             self.results['conf_matrix'][np.argmax(test_example['out'])][np.argmax(output)] += 1
 
-            test_loss += -np.sum(test_example['out'] * np.log(output / np.sum(output)))
+            test_loss +=  self._layers[-1].loss(output, test_example['out'])
             if np.argmax(output) != np.argmax(test_example['out']):
                 test_error += 1.0
 

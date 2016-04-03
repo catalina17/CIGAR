@@ -3,7 +3,6 @@ import numpy.testing
 import unittest
 
 from conv_layer import ConvLayer
-from conv_layer_cuda import ConvLayerCUDA
 
 
 class TestConvLayer(unittest.TestCase):

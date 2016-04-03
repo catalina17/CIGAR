@@ -3,7 +3,6 @@ import numpy.testing
 import unittest
 
 from fullyconnected_layer import FullyConnectedLayer
-from fullyconnected_layer_cuda import FullyConnectedLayerCUDA
 
 
 class TestFullyConnectedLayer(unittest.TestCase):

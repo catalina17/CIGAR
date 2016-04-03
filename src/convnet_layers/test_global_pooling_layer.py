@@ -3,7 +3,6 @@ import numpy.testing
 import unittest
 
 from globalpooling_layer import GlobalPoolingLayer
-from globalpooling_layer_cuda import GlobalPoolingLayerCUDA
 
 
 class TestGlobalPoolingLayer(unittest.TestCase):
@@ -39,7 +38,7 @@ class TestGlobalPoolingLayer(unittest.TestCase):
         self.layer.forward_prop(self.input)
 
         out_grad = np.array([0.1, 0.2, 0.3, 0.2, 0.1, 0.2], dtype=np.float64)
-        expected_in_grad = np.array([[0.025, 0.025, 0.025 + 0.3, 0.025],
+        expected_in_grad = np.array([[0.025 + 0.3, 0.025, 0.025, 0.025],
                                      [0.05 - 0.5 * 0.2, 0.05 - 0.1 * 0.2, 0.05 - 0.7 * 0.2,
                                       0.05 + 0.2 + 0.5 * 0.2]],
                                     dtype=np.float64)

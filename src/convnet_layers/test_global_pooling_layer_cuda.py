@@ -38,12 +38,12 @@ class TestGlobalPoolingLayerCUDA(unittest.TestCase):
         self.layer_cuda.forward_prop(self.input)
 
         out_grad = np.array([0.1, 0.2, 0.3, 0.2, 0.1, 0.2], dtype=np.float64)
-        expected_in_grad = np.array([[0.025, 0.025, 0.025 + 0.3, 0.025],
+        expected_in_grad = np.array([[0.025 + 0.3, 0.025, 0.025, 0.025],
                                      [0.05 - 0.5 * 0.2, 0.05 - 0.1 * 0.2, 0.05 - 0.7 * 0.2,
                                       0.05 + 0.2 + 0.5 * 0.2]],
                                     dtype=np.float64)
 
-        in_grad = self.layer.back_prop(out_grad)
+        in_grad = self.layer_cuda.back_prop(out_grad)
         numpy.testing.assert_array_almost_equal(in_grad, expected_in_grad)
 
     def test_get_output_shape(self):

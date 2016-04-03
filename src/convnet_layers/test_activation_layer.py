@@ -3,7 +3,6 @@ import numpy.testing
 import unittest
 
 from activation_layer import ActivationLayer
-from activation_layer_cuda import ActivationLayerCUDA
 
 
 class TestActivationLayer(unittest.TestCase):

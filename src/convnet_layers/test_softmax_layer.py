@@ -38,7 +38,7 @@ class TestSoftmaxLayer(TestCase):
         numpy.testing.assert_array_equal(expected_gradient, gradient)
 
     def test_loss(self):
-        expected_loss = 0.916
+        expected_loss = 0.9162907
         loss = self.layer.loss(self.predicted, self.true)
         self.assertAlmostEqual(expected_loss, loss)
 

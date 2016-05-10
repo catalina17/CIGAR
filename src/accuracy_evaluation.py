@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
     num_genres = 6
     num_test_examples = 60
-    num_runs = 28
+    num_runs = 30
     num_genres_str = 'six'
 
     average_confusion_matrix = numpy.zeros((num_genres, num_genres))

@@ -1,4 +1,4 @@
-# CIGAR
+# CIGAR ("Catalina's Ingenious Genre Automatic Recognizer" - Edgar Liberis, 2016.)
 
 Implementation of a CNN-based music recommendation system; inspired from Sander Dieleman's [work](http://benanne.github.io/2014/08/05/spotify-cnns.html) at Spotify.
 
